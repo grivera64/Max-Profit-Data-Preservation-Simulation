@@ -1,0 +1,95 @@
+c Min-Cost flow problem with 13 nodes and 41 arcs (edges)
+p min 13 41
+
+c Supply of 10 at node 0 ("Source")
+n 0 10
+
+c Demand of -10 at node 12 ("Sink")
+n 12 -10
+
+c arc list follows
+c arc has <tail> <head> <capacity l.b.> <capacity u.b> <cost>
+c Source -> DN01
+a 0 5 0 2 0
+c Source -> DN02
+a 0 7 0 2 0
+c Source -> DN03
+a 0 8 0 2 0
+c Source -> DN04
+a 0 9 0 2 0
+c Source -> DN05
+a 0 10 0 2 0
+
+c DN01 -> SN01
+a 5 1 0 1 655
+c DN01 -> SN02
+a 5 2 0 1 15
+c DN01 -> SN03
+a 5 3 0 1 -634
+c DN01 -> SN04
+a 5 4 0 1 1300
+c DN01 -> SN05
+a 5 6 0 1 -629
+c DN01 to Dummy Node
+a 5 11 0 1 0
+
+c DN02 -> SN01
+a 7 1 0 1 -434
+c DN02 -> SN02
+a 7 2 0 1 208
+c DN02 -> SN03
+a 7 3 0 1 858
+c DN02 -> SN04
+a 7 4 0 1 -1079
+c DN02 -> SN05
+a 7 6 0 1 850
+c DN02 to Dummy Node
+a 7 11 0 1 0
+
+c DN03 -> SN01
+a 8 1 0 1 -1023
+c DN03 -> SN02
+a 8 2 0 1 -1027
+c DN03 -> SN03
+a 8 3 0 1 -1021
+c DN03 -> SN04
+a 8 4 0 1 -378
+c DN03 -> SN05
+a 8 6 0 1 -1027
+c DN03 to Dummy Node
+a 8 11 0 1 0
+
+c DN04 -> SN01
+a 9 1 0 1 -1150
+c DN04 -> SN02
+a 9 2 0 1 -1150
+c DN04 -> SN03
+a 9 3 0 1 -505
+c DN04 -> SN04
+a 9 4 0 1 -505
+c DN04 -> SN05
+a 9 6 0 1 -1148
+c DN04 to Dummy Node
+a 9 11 0 1 0
+
+c DN05 -> SN01
+a 10 1 0 1 -836
+c DN05 -> SN02
+a 10 2 0 1 -839
+c DN05 -> SN03
+a 10 3 0 1 -193
+c DN05 -> SN04
+a 10 4 0 1 -191
+c DN05 -> SN05
+a 10 6 0 1 -836
+c DN05 to Dummy Node
+a 10 11 0 1 0
+
+c SNs to Sink
+a 1 12 0 2 0
+a 2 12 0 2 0
+a 3 12 0 2 0
+a 4 12 0 2 0
+a 6 12 0 2 0
+c Dummy to Sink
+a 11 12 0 10 0
