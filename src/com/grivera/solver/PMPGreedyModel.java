@@ -88,6 +88,7 @@ public class PMPGreedyModel extends AbstractModel {
         return this.totalCost;
     }
 
+    @Override
     public int getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;

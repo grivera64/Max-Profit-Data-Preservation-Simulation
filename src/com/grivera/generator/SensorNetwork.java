@@ -62,6 +62,28 @@ public class SensorNetwork implements Network {
         this.graph = this.initGraph(this.nodes);
     }
 
+    private SensorNetwork(SensorNetwork original) {
+        this.width = original.width;
+        this.length = original.length;
+        this.dataPacketCount = original.dataPacketCount;
+        this.storageCapacity = original.storageCapacity;
+        this.transmissionRange = original.transmissionRange;
+
+        /* Copy node information */
+        this.nodes = new ArrayList<>(original.nodes.size());
+        Collections.copy(this.nodes, original.nodes);
+
+        this.dNodes = new ArrayList<>(original.dNodes.size());
+        Collections.copy(this.dNodes, original.dNodes);
+
+        this.sNodes = new ArrayList<>(original.sNodes.size());
+        Collections.copy(this.sNodes, original.sNodes);
+
+        /* Directly copy edge info */
+
+        this.graph = new HashMap<>(original.graph);
+    }
+
     /**
      * Copy constructor to create a Sensor com.grivera.generator.Network from an .sn
      * file.
@@ -570,5 +592,9 @@ public class SensorNetwork implements Network {
     public int calculateProfitOf(DataNode from, StorageNode to) {
         int cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
+    }
+
+    public SensorNetwork copy() {
+        return new SensorNetwork(this);
     }
 }
