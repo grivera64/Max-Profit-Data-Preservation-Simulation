@@ -55,11 +55,6 @@ public class DataNode extends SensorNode {
         return this.packetsLeft;
     }
 
-    @Override
-    public int calculateStorageCost() {
-        return 0;
-    }
-
     public int getOverflowPacketValue() {
         return this.overflowPacketsValue;
     }

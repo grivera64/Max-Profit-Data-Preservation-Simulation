@@ -2,6 +2,7 @@ package com.grivera.generator;
 
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
+import com.grivera.generator.sensors.StorageNode;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
@@ -129,8 +130,10 @@ public class SensorNetworkGraph extends Pane {
         for (SensorNode node : network.getSensorNodes()) {
             if (node instanceof DataNode) {
                 this.gc.setStroke(Color.RED);
-            } else {
+            } else if (node instanceof StorageNode) {
                 this.gc.setStroke(Color.GREEN);
+            } else {
+                this.gc.setStroke(Color.GRAY);
             }
             this.drawNode(node, 8, true);
         }
@@ -166,6 +169,7 @@ public class SensorNetworkGraph extends Pane {
                 String.join(" -> ",
                         path.stream().map(SensorNode::getName).toArray(CharSequence[]::new)));
         System.out.printf("Cost of Path: %d micro J\n", this.network.calculateCostOfPath(path));
+        System.out.printf("Profit of Path: %d micro J\n", this.network.calculateProfitOf((DataNode) from, (StorageNode) to));
 
         this.gc.beginPath();
         this.gc.setStroke(Color.DARKORANGE);

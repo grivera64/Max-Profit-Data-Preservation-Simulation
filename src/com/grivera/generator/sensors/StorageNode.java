@@ -59,7 +59,6 @@ public class StorageNode extends SensorNode {
         return this.capacity - this.usedSpace;
     }
 
-    @Override
     public int calculateStorageCost() {
         double cost = this.usedSpace * BITS_PER_PACKET * E_store;
         return (int) Math.round(cost * Math.pow(10, 6));
