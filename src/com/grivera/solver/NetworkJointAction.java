@@ -20,6 +20,10 @@ public class NetworkJointAction implements Iterable<Pair<SensorNode, SensorNode>
         return this.actions.get(agentId - 1);
     }
 
+    public int size() {
+        return this.actions.size();
+    }
+
     @Override
     public Iterator<Pair<SensorNode, SensorNode>> iterator() {
         return Collections.unmodifiableList(this.actions).iterator();

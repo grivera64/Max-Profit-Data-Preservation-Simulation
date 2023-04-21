@@ -1,6 +1,7 @@
 package com.grivera.solver;
 
 import com.grivera.generator.sensors.SensorNode;
+import com.grivera.generator.sensors.StorageNode;
 import com.grivera.util.Pair;
 
 import java.util.*;
@@ -28,6 +29,13 @@ public class NashAgent {
         return String.format("Agent %02d is at %s (Path: %s)", this.id, this.currentNode.getName(), pathString);
     }
 
+    public void moveTo(SensorNode next) {
+        this.travelCost += this.currentNode.calculateTransmissionCost(next);
+        this.travelCost += next.calculateReceivingCost();
+        this.path.add(next);
+        this.currentNode = next;
+    }
+
     public void reset() {
         this.currentNode = this.startingNode;
         this.path.clear();
@@ -46,5 +54,12 @@ public class NashAgent {
 
     public SensorNode getCurrentNode() {
         return this.currentNode;
+    }
+
+    public boolean isDone() {
+        if (!(this.currentNode instanceof StorageNode)) {
+            return false;
+        }
+        return !((StorageNode) this.currentNode).isFull();
     }
 }

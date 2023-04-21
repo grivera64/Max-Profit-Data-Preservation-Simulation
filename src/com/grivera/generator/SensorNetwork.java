@@ -401,7 +401,7 @@ public class SensorNetwork implements Network {
         return seen.size() == nodes.size();
     }
 
-    private Set<SensorNode> getNeighbors(SensorNode node) {
+    public Set<SensorNode> getNeighbors(SensorNode node) {
         return this.graph.getOrDefault(node, Set.of());
     }
 
