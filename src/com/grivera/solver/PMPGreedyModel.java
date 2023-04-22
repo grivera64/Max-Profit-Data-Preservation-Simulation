@@ -47,7 +47,7 @@ public class PMPGreedyModel extends AbstractModel {
                     }
 
                     currProfit = network.calculateProfitOf(dn, sn);
-                    currPacketsToSend = Math.min(dn.getOverflowPackets(), sn.getSpaceLeft());
+                    currPacketsToSend = Math.min(dn.getPacketsLeft(), sn.getSpaceLeft());
 
                     /* Check if we can choose a better SN */
                     foundBetterProfit = chosenSn == null || currProfit > chosenProfit;
@@ -74,7 +74,7 @@ public class PMPGreedyModel extends AbstractModel {
 //                    System.out.printf("%s [%d] -> Dummy [%d] (%d packets discarded)\n",
 //                            dn.getName(), dn.getUuid(), network.getSensorNodes().size() + 1, dn.getOverflowPackets()
 //                    );
-                    dn.removePackets(dn.getOverflowPackets());
+                    dn.removePackets(dn.getPacketsLeft());
                 }
             }
         }
