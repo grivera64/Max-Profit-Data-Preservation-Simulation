@@ -87,8 +87,6 @@ public abstract class SensorNode {
         return (int) Math.round(cost * Math.pow(10, 6));
     }
 
-    public abstract int calculateStorageCost();
-
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof SensorNode sn)) {

@@ -3,6 +3,7 @@ package com.grivera.generator;
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
+import com.grivera.generator.sensors.TransitionNode;
 import com.grivera.util.Pair;
 import com.grivera.util.Tuple;
 
@@ -14,7 +15,7 @@ import java.util.*;
 /**
  * An implementation of a com.grivera.generator.Network that contains Data and
  * Storage Sensor Nodes
- *
+ * 
  * @see Network
  */
 public class SensorNetwork implements Network {
@@ -22,6 +23,7 @@ public class SensorNetwork implements Network {
     private List<SensorNode> nodes;
     private List<DataNode> dNodes;
     private List<StorageNode> sNodes;
+    private List<TransitionNode> tNodes;
     private Map<SensorNode, Set<SensorNode>> graph;
 
     private final Map<Pair<SensorNode, SensorNode>, Integer> costMap = new HashMap<>();
@@ -33,18 +35,19 @@ public class SensorNetwork implements Network {
 
     /**
      * Constructor to create a Sensor com.grivera.generator.Network
-     *
+     * 
      * @param x  the width of the network (in meters)
      * @param y  the length of the network (in meters)
      * @param N  the number of nodes
      * @param tr the transmission range of the nodes (in meters)
      * @param p  the number of Data Nodes in the network
      * @param q  the number of data packets each Data Node has
+     * @param s  the number of Storage Nodes in the network
      * @param m  the storage capacity each Storage nodes has
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int m, int Vl, int Vh) {
+    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
         this.width = x;
         this.length = y;
         this.dataPacketCount = q;
@@ -52,36 +55,17 @@ public class SensorNetwork implements Network {
         this.transmissionRange = tr;
 
         /* Used to separate each type of node for later use and retrieval */
+        if (p + s > N) throw new IllegalArgumentException("Invalid SensorNetwork constructor parameters");
+
         this.dNodes = new ArrayList<>(p);
-        this.sNodes = new ArrayList<>(N - p);
+        this.sNodes = new ArrayList<>(s);
+        this.tNodes = new ArrayList<>(N - s - p);
 
         /*
          * Init the Sensor com.grivera.generator.Network to allow basic operations on it
          */
-        this.nodes = this.initNodes(N, p, Vl, Vh);
+        this.nodes = this.initNodes(N, p, s, Vl, Vh);
         this.graph = this.initGraph(this.nodes);
-    }
-
-    private SensorNetwork(SensorNetwork original) {
-        this.width = original.width;
-        this.length = original.length;
-        this.dataPacketCount = original.dataPacketCount;
-        this.storageCapacity = original.storageCapacity;
-        this.transmissionRange = original.transmissionRange;
-
-        /* Copy node information */
-        this.nodes = new ArrayList<>(original.nodes.size());
-        Collections.copy(this.nodes, original.nodes);
-
-        this.dNodes = new ArrayList<>(original.dNodes.size());
-        Collections.copy(this.dNodes, original.dNodes);
-
-        this.sNodes = new ArrayList<>(original.sNodes.size());
-        Collections.copy(this.sNodes, original.sNodes);
-
-        /* Directly copy edge info */
-
-        this.graph = new HashMap<>(original.graph);
     }
 
     /**
@@ -136,10 +120,12 @@ public class SensorNetwork implements Network {
             SensorNode.resetCounter();
             StorageNode.resetCounter();
             DataNode.resetCounter();
+            TransitionNode.resetCounter();
 
-            this.nodes = new ArrayList<>(N);
-            this.sNodes = new ArrayList<>(N);
-            this.dNodes = new ArrayList<>(N);
+            this.nodes = new ArrayList<>();
+            this.sNodes = new ArrayList<>();
+            this.dNodes = new ArrayList<>();
+            this.tNodes = new ArrayList<>();
 
             String[] lineArgs;
             double x, y;
@@ -156,17 +142,23 @@ public class SensorNetwork implements Network {
 
                 // Requires JDK 12+
                 node = switch (lineArgs[0]) {
-                    case "d" -> new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
+                    case "d" ->
+                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
                     case "s" ->
-                            new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
-                    default -> throw new IOException();
+                        new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
+                    case "t" ->
+                            new TransitionNode(x, y, this.transmissionRange);
+                    default ->
+                            throw new IOException();
                 };
 
                 this.nodes.add(node);
                 if (node instanceof DataNode) {
                     this.dNodes.add((DataNode) node);
-                } else {
+                } else if (node instanceof StorageNode) {
                     this.sNodes.add((StorageNode) node);
+                } else {
+                    this.tNodes.add((TransitionNode) node);
                 }
                 lineNumber++;
             }
@@ -176,11 +168,11 @@ public class SensorNetwork implements Network {
         }
     }
 
-    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int m, int Vl, int Vh) {
+    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
         SensorNetwork network;
         int attempts = 0;
         do {
-            network = new SensorNetwork(x, y, N, tr, p, q, m, Vl, Vh);
+            network = new SensorNetwork(x, y, N, tr, p, q, s, m, Vl, Vh);
 
             /* Checks if the parameters in the program are feasible */
             if (!network.isFeasible()) {
@@ -217,7 +209,7 @@ public class SensorNetwork implements Network {
         return sn;
     }
 
-    private List<SensorNode> initNodes(int nodeCount, int p, int Vl, int Vh) {
+    private List<SensorNode> initNodes(int nodeCount, int p, int s, int Vl, int Vh) {
         List<SensorNode> nodes = new ArrayList<>(nodeCount);
         Random rand = new Random();
 
@@ -225,6 +217,7 @@ public class SensorNetwork implements Network {
         SensorNode.resetCounter();
         StorageNode.resetCounter();
         DataNode.resetCounter();
+        TransitionNode.resetCounter();
 
         /* Choose p random nodes to be Generator Nodes, the rest are Storage Nodes */
         int choice;
@@ -238,13 +231,17 @@ public class SensorNetwork implements Network {
 
             tmpVal = rand.nextInt(Vh - Vl + 1) + Vl;
 
-            if ((choice < 5 && p > 0) || nodeCount - index <= p) {
+            if ((choice < 4 && p > 0) || nodeCount - index <= p) {
                 tmp = new DataNode(x, y, this.transmissionRange, this.dataPacketCount, tmpVal);
                 this.dNodes.add((DataNode) tmp);
                 p--;
-            } else {
+            } else if ((choice < 8 && s > 0) || nodeCount - index - p - s <= 0) {
                 tmp = new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
                 this.sNodes.add((StorageNode) tmp);
+                s--;
+            } else {
+                tmp = new TransitionNode(x, y, this.transmissionRange);
+                this.tNodes.add((TransitionNode) tmp);
             }
             nodes.add(tmp);
         }
@@ -299,13 +296,13 @@ public class SensorNetwork implements Network {
         return Collections.unmodifiableList(this.sNodes);
     }
 
+    @Override
+    public List<TransitionNode> getTransitionNodes() {
+        return Collections.unmodifiableList(this.tNodes);
+    }
+
     /**
-     * Tests whether all the nodes are directly or indirectly connected with each
-     * other.
-     *
-     * @return true if and only if all the nodes are directly or indirectly
-     *         connected
-     *         with each other; otherwise false
+     * {@inheritDoc}
      */
     @Override
     public boolean isConnected() {
@@ -313,12 +310,7 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Tests whether there is enough storage for all the overflow packets in the
-     * network.
-     *
-     * @return true if and only if there is enough storage for all the overflow
-     *         packets in the network;
-     *         otherwise false
+     * {@inheritDoc}
      */
     @Override
     public boolean isFeasible() {
@@ -344,13 +336,7 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Returns the sensor nodes in the min-cost path between the from and to sensor
-     * nodes
-     *
-     * @param from the starting sensor node
-     * @param to   the ending sensor node
-     * @return a list of the sensor nodes in the min-cost path between the from and
-     *         to sensor nodes
+     * {@inheritDoc}
      */
     @Override
     public List<SensorNode> getMinCostPath(SensorNode from, SensorNode to) {
@@ -358,10 +344,7 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Calculates the cost of a given path.
-     *
-     * @param path the path between two sensor nodes
-     * @return the cost of the given path
+     * {@inheritDoc}
      */
     @Override
     public int calculateCostOfPath(List<SensorNode> path) {
@@ -373,9 +356,7 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Saves the network into a .sn file format.
-     *
-     * @param fileName the path to the file to save to
+     * {@inheritDoc}
      */
     @Override
     public void save(String fileName) {
@@ -389,8 +370,10 @@ public class SensorNetwork implements Network {
             for (SensorNode n : this.nodes) {
                 if (n instanceof DataNode dn) {         // JDK 15+ feature
                     pw.printf("%c %f %f %d\n", 'd', dn.getX(), dn.getY(), dn.getOverflowPacketValue());
-                } else {
+                } else if (n instanceof StorageNode) {
                     pw.printf("%c %f %f\n", 's', n.getX(), n.getY());
+                } else {
+                    pw.printf("%c %f %f\n", 't', n.getX(), n.getY());
                 }
             }
             System.out.printf("Saved sensor network in file \"%s\"!\n", fileName);
@@ -427,18 +410,14 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Saves the network in the <b>DIMAC</b> format
-     * that can be used for the min-cost flow program
-     * <a href="https://github.com/iveney/cs2">CS2</a>.
-     *
-     * @param fileName the path to the file to save to
+     * {@inheritDoc}
      */
     @Override
     public void saveAsCsInp(String fileName) {
         final int supply = this.dataPacketCount * this.dNodes.size();
         final int demand = -supply;
 
-        final int totalNodes = this.nodes.size() + 3;
+        final int totalNodes = this.dNodes.size() + this.sNodes.size() + 3;
         final int totalEdges = this.getEdgeCount();
 
         File file = new File(fileName);
@@ -592,9 +571,5 @@ public class SensorNetwork implements Network {
     public int calculateProfitOf(DataNode from, StorageNode to) {
         int cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
-    }
-
-    public SensorNetwork copy() {
-        return new SensorNetwork(this);
     }
 }
