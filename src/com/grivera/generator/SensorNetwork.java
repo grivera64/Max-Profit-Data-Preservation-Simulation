@@ -280,6 +280,18 @@ public class SensorNetwork implements Network {
     public double getLength() {
         return this.length;
     }
+    
+    public int getDataPacketCount() {
+        return dataPacketCount;
+    }
+
+    public void setDataPacketCount(int dataPacketCount) {
+        this.dataPacketCount = dataPacketCount;
+    }
+
+    public int getStorageCapacity() {
+        return storageCapacity;
+    }
 
     @Override
     public List<SensorNode> getSensorNodes() {
@@ -401,7 +413,7 @@ public class SensorNetwork implements Network {
         return seen.size() == nodes.size();
     }
 
-    private Set<SensorNode> getNeighbors(SensorNode node) {
+    public Set<SensorNode> getNeighbors(SensorNode node) {
         return this.graph.getOrDefault(node, Set.of());
     }
 
