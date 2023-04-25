@@ -82,6 +82,12 @@ public class PMPGreedyModel extends AbstractModel {
     }
 
     @Override
+    public void run(int epi) {
+        System.err.println("WARNING: Cannot specify epi for Greedy models. Defaulting epi = 1...");
+        this.run();
+    }
+
+    @Override
     public int getTotalCost() {
         super.getTotalCost();
 
