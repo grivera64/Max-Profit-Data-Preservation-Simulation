@@ -632,4 +632,8 @@ public class SensorNetwork implements Network {
         int cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
     }
+
+    public SensorNode getSensorNodeByUuid(int uuid) {
+        return this.nodes.get(uuid - 1);
+    }
 }
