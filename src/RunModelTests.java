@@ -2,6 +2,7 @@
 import com.grivera.solver.Cs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
+import com.grivera.solver.Cs2Model;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 
@@ -41,6 +42,13 @@ public class RunModelTests {
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
 //        Cs2Model model2 = new Cs2Model("figure_3_sensor_network.sn");
 //        System.out.println(model2.getTotalCost());
+        System.out.println();
+
+        model = new Cs2Model(network);
+        model.run();
+        System.out.println("CS2 (Optimal):");
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.println();
     }
 
