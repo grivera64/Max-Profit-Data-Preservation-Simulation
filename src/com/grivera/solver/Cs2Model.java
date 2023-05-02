@@ -6,6 +6,8 @@ import com.grivera.util.Tuple;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -52,21 +54,28 @@ public class Cs2Model extends AbstractModel {
         String flowNetworkName = String.format("cs2_reader_tmp_%s", this.getDateString());
 
         Network network = this.getNetwork();
-        network.saveAsCsInp(flowNetworkName);
+        network.saveAsCsInp(String.format("%s.inp", flowNetworkName));
+
+        Path tmpFile = null;
         try {
+            tmpFile = Files.createTempFile(Path.of("."), flowNetworkName, ".txt");
             new ProcessBuilder(
                     List.of("cmd", "/C",
-                            String.format("(\"%s/cs2.exe\" < \"%s.inp\") > \"%s.txt\"", this.cs2Location, flowNetworkName, flowNetworkName)
+                            String.format("(\"%s/cs2.exe\" < \"%s.inp\") > \"%s\"", this.cs2Location, flowNetworkName, tmpFile.toString())
                     )
             )
                     .directory(new File("."))
                     .start()
                     .waitFor();
+            System.out.printf("Saved Cs2 Output to \"%s\"!\n", tmpFile);
         } catch (IOException | InterruptedException e) {
             System.out.println("Terminal didn't run successfully");
         }
 
-        this.parseCs2(new File("tmp.txt"));
+        assert tmpFile != null;
+        this.parseCs2(tmpFile.toFile());
+        new File(flowNetworkName + ".inp").deleteOnExit();
+        tmpFile.toFile().deleteOnExit();
     }
 
     private void parseCs2(File file) {
