@@ -67,15 +67,14 @@ public class Cs2Model extends AbstractModel {
                     .directory(new File("."))
                     .start()
                     .waitFor();
-            System.out.printf("Saved Cs2 Output to \"%s\"!\n", tmpFile);
         } catch (IOException | InterruptedException e) {
             System.out.println("Terminal didn't run successfully");
         }
 
         assert tmpFile != null;
         this.parseCs2(tmpFile.toFile());
-        new File(flowNetworkName + ".inp").deleteOnExit();
-        tmpFile.toFile().deleteOnExit();
+        new File(flowNetworkName + ".inp").delete();
+        tmpFile.toFile().delete();
     }
 
     private void parseCs2(File file) {
