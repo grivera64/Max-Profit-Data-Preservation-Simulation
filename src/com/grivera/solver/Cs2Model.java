@@ -48,20 +48,25 @@ public class Cs2Model extends AbstractModel {
         File[] files = currDir.listFiles(f -> f.getName().startsWith("cs2."));
         assert files != null;
         if (files.length < 1) {
-            throw new RuntimeException(String.format("Couldn't find CS2 program in current directory [%s]", currDir.getAbsoluteFile()));
+            throw new RuntimeException(
+                    String.format("Couldn't find CS2 program [Searched Dir: \"%s\"]", currDir.getAbsoluteFile())
+            );
         }
 
-        String flowNetworkName = String.format("cs2_reader_tmp_%s", this.getDateString());
+        String baseFileName = String.format("cs2_model_%s", this.getDateString());
+        String tmpInpName = String.format("%s.inp", baseFileName);
 
         Network network = this.getNetwork();
-        network.saveAsCsInp(String.format("%s.inp", flowNetworkName));
+        network.saveAsCsInp(tmpInpName);
 
-        Path tmpFile = null;
+        Path tmpTxt = null;
+        String tmpTxtName;
         try {
-            tmpFile = Files.createTempFile(Path.of("."), flowNetworkName, ".txt");
+            tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");
+            tmpTxtName = tmpTxt.toString();
             new ProcessBuilder(
                     List.of("cmd", "/C",
-                            String.format("(\"%s/cs2.exe\" < \"%s.inp\") > \"%s\"", this.cs2Location, flowNetworkName, tmpFile.toString())
+                            String.format("(\"%s/cs2\" < \"%s\") > \"%s\"", this.cs2Location, tmpInpName, tmpTxtName)
                     )
             )
                     .directory(new File("."))
@@ -71,10 +76,12 @@ public class Cs2Model extends AbstractModel {
             System.out.println("Terminal didn't run successfully");
         }
 
-        assert tmpFile != null;
-        this.parseCs2(tmpFile.toFile());
-        new File(flowNetworkName + ".inp").delete();
-        tmpFile.toFile().delete();
+        assert tmpTxt != null;
+        this.parseCs2(tmpTxt.toFile());
+
+        /* Clear the .inp and .txt files after no longer needed */
+        new File(tmpInpName).delete();
+        tmpTxt.toFile().delete();
     }
 
     private void parseCs2(File file) {
