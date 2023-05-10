@@ -33,10 +33,11 @@ public class NetState {
 
     public void resetForEpisode(){
         //for episode, reset stateTransitions, packetsStoredinNode, packetsStoredinNodeNext, maxQnextTransition
-        stateTransitionReward = new HashMap<>();
+        //stateTransitionReward = new HashMap<>();
         packetsStoredInNode = new HashMap<>();
         packetsStoredInNodeNext = new HashMap<>();
         maxQNextTransition = new HashMap<>();
+        stateTransitions = new ArrayList<>();
     }
 
     public List<Agent> getAgents() {

@@ -37,8 +37,8 @@ public class Agent {
 
     public void setOriginalLocation(SensorNode originalLocation) {
         this.originalLocation = originalLocation;
-        route.add(null);
-        route.set(0, originalLocation);
+        //route.add(null);
+        route.add(0, originalLocation);
     }
 
     public void setCurrentLocation(SensorNode currLocation) {
@@ -50,6 +50,7 @@ public class Agent {
         storedInStorage = false;
         storedInStorageNext = false;
         route = new ArrayList<>();
+        route.add(0, originalLocation);
     }
 
     public int getPacketValue() {
