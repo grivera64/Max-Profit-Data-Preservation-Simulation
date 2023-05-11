@@ -78,7 +78,6 @@ public class PMPGreedyModel extends AbstractModel {
                 }
             }
         }
-        System.out.println();
     }
 
     @Override
