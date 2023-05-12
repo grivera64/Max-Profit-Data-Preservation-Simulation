@@ -25,6 +25,7 @@ public class Cs2Model extends AbstractModel {
     public Cs2Model(Network network, String cs2Location) {
         super(network);
         this.cs2Location = cs2Location;
+        this.verifyCs2();
     }
 
     public Cs2Model(String fileName) {
@@ -35,23 +36,27 @@ public class Cs2Model extends AbstractModel {
     public Cs2Model(String fileName, String cs2Location) {
         super(fileName);
         this.cs2Location = cs2Location;
+        this.verifyCs2();
     }
 
     public Cs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
         this.cs2Location = cs2Location;
+        this.verifyCs2();
+    }
+
+    private void verifyCs2() {
+        File currDir = new File(this.cs2Location);
+        File[] files = currDir.listFiles(f -> f.getName().startsWith("cs2."));
+        if (files == null || files.length < 1) {
+            throw new IllegalArgumentException(
+                    String.format("Couldn't find CS2 program [Searched Dir: \"%s\"]", currDir.getAbsoluteFile())
+            );
+        }
     }
 
     public void run() {
         super.run();
-        File currDir = new File(this.cs2Location);
-        File[] files = currDir.listFiles(f -> f.getName().startsWith("cs2."));
-        assert files != null;
-        if (files.length < 1) {
-            throw new RuntimeException(
-                    String.format("Couldn't find CS2 program [Searched Dir: \"%s\"]", currDir.getAbsoluteFile())
-            );
-        }
 
         String baseFileName = String.format("cs2_model_%s", this.getDateString());
         String tmpInpName = String.format("%s.inp", baseFileName);

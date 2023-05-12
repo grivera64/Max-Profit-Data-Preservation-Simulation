@@ -33,7 +33,7 @@ to the optimal energy consumption from the Minimum Cost Flow algorithm (More inf
 ### Dependencies
 
 - JDK 14 or newer ([Latest JDK from Oracle](https://www.oracle.com/java/technologies/downloads/))
-- (Not Required) CS2 executable ([view GitHub Repository](https://github.com/iveney/cs2))
+- CS2 executable ([Installation and Setup Instructions](./CS2_SETUP.md))
   - Use `make` to build the binaries from the repository above and save the executable somewhere and remeber its path.
   > Note: We will refer to the path to the CS2 executable as `%PATH_TO_CS2%`.
 

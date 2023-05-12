@@ -14,12 +14,17 @@ public class RunModelTests {
     public static void main(String[] args) {
         System.out.println("Welcome to the Max Profit Data Preservation Simulator!");
         System.out.println("===========================================");
+        System.out.println();
 
         System.out.print("Please enter an option: (G)enerate/(F)ile/(Q)uit:\n> ");
-        int option = keyboard.nextLine().charAt(0);
+        String option = keyboard.nextLine();
+
+        if (option.isBlank() || option.isEmpty()) {
+            option = "Q";
+        }
 
         Network network = null;
-        switch (option) {
+        switch (option.charAt(0)) {
             case 'F', 'f' ->  network = readNetwork();
             case 'G', 'g' -> {
                 network = generateNetwork();
@@ -32,6 +37,13 @@ public class RunModelTests {
         }
         System.out.println();
 
+        System.out.print("Where is your installation of cs2.exe located?\n(\".\") > ");
+        String cs2Location = keyboard.nextLine();
+        if (cs2Location.isEmpty()) {
+            cs2Location = ".";
+        }
+        System.out.println();
+
         System.out.println("Running models...");
         System.out.println("=================");
 
@@ -40,16 +52,20 @@ public class RunModelTests {
         System.out.println("Greedy:");
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-//        Cs2Model model2 = new Cs2Model("figure_3_sensor_network.sn");
-//        System.out.println(model2.getTotalCost());
         System.out.println();
 
-        model = new Cs2Model(network);
-        model.run();
-        System.out.println("CS2 (Optimal):");
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-        System.out.println();
+        try {
+            System.out.println("CS2 (Optimal):");
+            model = new Cs2Model(network, cs2Location);
+            model.run();
+            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        } catch (IllegalArgumentException e) {
+            System.out.printf("WARNING: %s\n", e.getMessage());
+            System.out.println("Skipping Cs2Model...");
+        } finally {
+            System.out.println();
+        }
     }
 
     public static Network readNetwork() {
