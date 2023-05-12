@@ -64,21 +64,30 @@ public class Cs2Model extends AbstractModel {
         Network network = this.getNetwork();
         network.saveAsCsInp(tmpInpName);
 
+        String cs2FullPath = new File(this.cs2Location).getAbsolutePath();
         Path tmpTxt = null;
         String tmpTxtName;
         try {
             tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");
             tmpTxtName = tmpTxt.toString();
-            new ProcessBuilder(
-                    List.of("cmd", "/C",
-                            String.format("(\"%s/cs2\" < \"%s\") > \"%s\"", this.cs2Location, tmpInpName, tmpTxtName)
-                    )
-            )
+            String osName = System.getProperty("os.name");
+            String mainCommand = String.format("(\"%s/cs2\" < \"%s\") > \"%s\"", cs2FullPath, tmpInpName, tmpTxtName);
+
+            List<String> osCommand;
+            if (osName.startsWith("Windows")) {
+                osCommand = List.of("cmd", "/C", mainCommand);
+            } else if (osName.startsWith("Mac OS")) {
+                osCommand = List.of("/bin/zsh", mainCommand);
+            } else {
+                osCommand = List.of("sh", mainCommand);
+            }
+
+            new ProcessBuilder(osCommand)
                     .directory(new File("."))
                     .start()
                     .waitFor();
         } catch (IOException | InterruptedException e) {
-            System.out.println("Terminal didn't run successfully");
+            System.err.println("Terminal didn't run successfully");
         }
 
         assert tmpTxt != null;

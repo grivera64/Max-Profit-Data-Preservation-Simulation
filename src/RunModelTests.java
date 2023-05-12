@@ -61,7 +61,8 @@ public class RunModelTests {
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         } catch (IllegalArgumentException e) {
-            System.out.printf("WARNING: %s\n", e.getMessage());
+            System.err.printf("WARNING: %s\n", e.getMessage());
+            System.err.flush();
             System.out.println("Skipping Cs2Model...");
         } finally {
             System.out.println();
