@@ -71,7 +71,7 @@ public class Cs2Model extends AbstractModel {
             tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");
             tmpTxtName = tmpTxt.toString();
             String osName = System.getProperty("os.name");
-            String mainCommand = String.format("(\"%s/cs2\" < \"%s\") > \"%s\"", cs2FullPath, tmpInpName, tmpTxtName);
+            String mainCommand = String.format("(\"%s/cs2.exe\" < \"%s\") > \"%s\"", cs2FullPath, tmpInpName, tmpTxtName);
 
             List<String> osCommand;
             if (osName.startsWith("Windows")) {
