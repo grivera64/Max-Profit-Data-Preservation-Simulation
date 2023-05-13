@@ -71,31 +71,30 @@ public class Cs2Model extends AbstractModel {
             tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");
             tmpTxtName = tmpTxt.toString();
             String osName = System.getProperty("os.name");
-            String mainCommand = String.format("(\"%s/cs2.exe\" < \"%s\") > \"%s\"", cs2FullPath, tmpInpName, tmpTxtName);
+            String mainCommand = String.format("(\"%s/cs2\" < \"%s\") > \"%s\"", cs2FullPath, tmpInpName, tmpTxtName);
 
             List<String> osCommand;
             if (osName.startsWith("Windows")) {
-                osCommand = List.of("cmd", "/C", mainCommand);
+                osCommand = List.of("cmd", "/C", mainCommand.replace("/", "\\"));
             } else if (osName.startsWith("Mac OS")) {
-                osCommand = List.of("/bin/zsh", mainCommand);
+                osCommand = List.of("/bin/zsh", "-c", mainCommand);
             } else {
-                osCommand = List.of("sh", mainCommand);
+                osCommand = List.of("/bin/bash", "-c", mainCommand);
             }
 
             new ProcessBuilder(osCommand)
                     .directory(new File("."))
                     .start()
                     .waitFor();
+
+            this.parseCs2(tmpTxt.toFile());
+
+            /* Clear the .inp and .txt files after no longer needed */
+            tmpTxt.toFile().delete();
         } catch (IOException | InterruptedException e) {
-            System.err.println("Terminal didn't run successfully");
+            System.err.printf("ERROR: Terminal not supported for '%s'!\n", System.getProperty("os.name"));
         }
-
-        assert tmpTxt != null;
-        this.parseCs2(tmpTxt.toFile());
-
-        /* Clear the .inp and .txt files after no longer needed */
         new File(tmpInpName).delete();
-        tmpTxt.toFile().delete();
     }
 
     private void parseCs2(File file) {
@@ -138,7 +137,8 @@ public class Cs2Model extends AbstractModel {
                     case 'c':
                         break;
                     default:
-                        throw new RuntimeException("Invalid starting char!");
+                        System.err.printf("WARNING: Invalid command '%s' found! Skipping...\n", lineSplit[0]);
+                        break;
                 }
             }
         } catch (IOException e) {

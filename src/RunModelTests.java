@@ -2,10 +2,11 @@
 import com.grivera.solver.Cs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
-import com.grivera.solver.Cs2Model;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 
+import java.io.BufferedOutputStream;
+import java.io.PrintStream;
 import java.util.Scanner;
 
 public class RunModelTests {
@@ -61,8 +62,7 @@ public class RunModelTests {
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         } catch (IllegalArgumentException e) {
-            System.err.printf("WARNING: %s\n", e.getMessage());
-            System.err.flush();
+            System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
         } finally {
             System.out.println();

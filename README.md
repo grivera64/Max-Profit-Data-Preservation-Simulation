@@ -56,8 +56,12 @@ cd src
 
 ### 3. Compile using javac
 
+```batch
+for /r %f in (*.java) do javac -p . -d ../bin %f
+```
+
 ```sh
-javac -p "." *.java -d ../bin
+find . -name "*.java" -type f -exec javac -p . -d ../bin {} \;
 ```
 
 ### 4. Change directories into the binaries folder
