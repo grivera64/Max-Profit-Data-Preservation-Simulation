@@ -8,21 +8,19 @@
 1. Clone the CS2 repository from GitHub.
 
 ```sh
-git clone https://www.github.com/iveney/cs2
+git clone https://www.github.com/iveney/cs2.git
 ```
 
-2. Rename the cs2 directory to avoid future errors and change directories into the CS2 folder where all the source code is.
+2. Change directories into the CS2 folder where all the source code is.
 
 Windows:
 ```bat
-move cs2 cs2-folder
-cd cs2-folder
+cd cs2
 ```
 
 Mac/Linux:
 ```sh
-mv cs2 cs2-folder
-cd cs2-folder
+cd cs2
 ```
 
 3. In the cs2 folder we cloned, there will be a `makefile` located inside of it. Open
@@ -42,7 +40,6 @@ CCOMP = gcc
 CFLAGS = -g -Wall
 BIN=cs2
 
-OS = $(shell uname)
 ifeq ($(OS), Windows_NT)
 	CDEFINES = -DWINDOWS_TIMER -DPRINT_ANS -DCOST_RESTART
 else
@@ -70,6 +67,6 @@ make
 - Copy the absolute path of the enclosing folder of the executable. You will need this when running `RunModelTests`. 
 
     > **TIP**: You can use the `pwd` command on Mac/Linux to see the current path. We will refer to this path in
-      this repository as `%PATH_TO_CS2`.
+      this repository as `%PATH_TO_CS2%`.
 
 - Copy the executable and paste the executable to the folder you need it in.

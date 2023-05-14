@@ -57,7 +57,7 @@ cd src
 ### 3. Compile using javac
 
 ```batch
-for /r %f in (*.java) do javac -p . -d ../bin %f
+javac -p . *.java -d ../bin
 ```
 
 ```sh
@@ -73,7 +73,7 @@ cd bin
 
 ### 5. Run the program
 ```sh
-java -p "."  RunModelTests
+java RunModelTests
 ```
 
 ## Example
