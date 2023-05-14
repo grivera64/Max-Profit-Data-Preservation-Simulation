@@ -44,13 +44,13 @@ BIN=cs2
 
 OS = $(shell uname)
 ifeq ($(OS), Windows_NT)
-    CDEFINES = -DWINDOWS_TIMER -DPRINT_ANS -DCOMP_DUALS -DCOST_RESTART
+	CDEFINES = -DWINDOWS_TIMER -DPRINT_ANS -DCOST_RESTART
 else
-    CDEFINES = -DPRINT_ANS -DCOMP_DUALS -DCOST_RESTART
+	CDEFINES = -DPRINT_ANS -DCOST_RESTART
 endif
 
 cs2: cs2.c parser_cs2.c types_cs2.h timer.c
-    $(CCOMP) $(CFLAGS) $(CDEFINES) -o $(BIN) cs2.c -lm
+	$(CCOMP) $(CFLAGS) $(CDEFINES) -o $(BIN) cs2.c -lm
 
 ```
 
