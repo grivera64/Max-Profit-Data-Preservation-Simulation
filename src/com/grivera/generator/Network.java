@@ -82,4 +82,5 @@ public interface Network {
     void sendPackets(DataNode dn, StorageNode sn, int packets);
     void resetPackets();
     int calculateProfitOf(DataNode from, StorageNode to);
+    SensorNode getSensorNodeByUuid(int uuid);
 }

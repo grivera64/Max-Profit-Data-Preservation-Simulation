@@ -32,8 +32,8 @@ to the optimal energy consumption from the Minimum Cost Flow algorithm (More inf
 
 ### Dependencies
 
-- JDK 14 or newer ([Latest JDK from Oracle](https://www.oracle.com/java/technologies/downloads/))
-- (Not Required) CS2 executable ([view GitHub Repository](https://github.com/iveney/cs2))
+- JDK 17 or newer ([Latest JDK from Oracle](https://www.oracle.com/java/technologies/downloads/))
+- CS2 executable ([Installation and Setup Instructions](./CS2_SETUP.md))
   - Use `make` to build the binaries from the repository above and save the executable somewhere and remeber its path.
   > Note: We will refer to the path to the CS2 executable as `%PATH_TO_CS2%`.
 
@@ -56,8 +56,14 @@ cd src
 
 ### 3. Compile using javac
 
+Windows:
+```batch
+javac -p . *.java -d ../bin
+```
+
+Mac/Linux:
 ```sh
-javac -p "." *.java -d ../bin
+find . -name "*.java" -type f -exec javac -p . -d ../bin {} \;
 ```
 
 ### 4. Change directories into the binaries folder
@@ -69,7 +75,7 @@ cd bin
 
 ### 5. Run the program
 ```sh
-java -p "."  RunModelTests
+java RunModelTests
 ```
 
 ## Example
@@ -80,15 +86,26 @@ java -p "."  RunModelTests
 ```txt
 Welcome to the Max Profit Data Preservation Simulator!
 ===========================================
+
 Please enter an option: (G)enerate/(F)ile/(Q)uit:
 > F
 Please enter the file name:
 F > figure_3_sensor_network.sn
 
+Where is your installation of cs2.exe located?
+(".") > $PATH_TO_CS2
+
 Running models...
 =================
+Greedy:
 Cost: 6412 µJ
 Profit: 9452 µJ
+
+CS2 (Optimal):
+Saved flow network in file "cs2_tmp_20230518164514.inp"!
+Cost: 6406 µJ
+Profit: 9458 µJ
+
 ```
 
 ## Related Projects
