@@ -1,12 +1,9 @@
-//import com.grivera.generator.sensors.SensorNode;
 import com.grivera.solver.Cs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 
-import java.io.BufferedOutputStream;
-import java.io.PrintStream;
 import java.util.Scanner;
 
 public class RunModelTests {
@@ -42,6 +39,10 @@ public class RunModelTests {
         String cs2Location = keyboard.nextLine();
         if (cs2Location.isEmpty()) {
             cs2Location = ".";
+        } else if (cs2Location.matches("\\$[A-Za-z_][A-Za-z0-9_]*")) {
+            cs2Location = System.getenv(cs2Location.substring(1));
+        } else if (cs2Location.matches("%[A-Za-z_][A-Za-z0-9_]*%")) {
+            cs2Location = System.getenv(cs2Location.substring(1, cs2Location.length() - 1));
         }
         System.out.println();
 

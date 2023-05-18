@@ -58,14 +58,14 @@ public class Cs2Model extends AbstractModel {
     public void run() {
         super.run();
 
-        String baseFileName = String.format("cs2_model_%s", this.getDateString());
+        String baseFileName = String.format("cs2_tmp_%s", this.getDateString());
         String tmpInpName = String.format("%s.inp", baseFileName);
 
         Network network = this.getNetwork();
         network.saveAsCsInp(tmpInpName);
 
         String cs2FullPath = new File(this.cs2Location).getAbsolutePath();
-        Path tmpTxt = null;
+        Path tmpTxt;
         String tmpTxtName;
         try {
             tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");

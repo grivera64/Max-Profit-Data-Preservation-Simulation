@@ -56,10 +56,12 @@ cd src
 
 ### 3. Compile using javac
 
+Windows:
 ```batch
 javac -p . *.java -d ../bin
 ```
 
+Mac/Linux:
 ```sh
 find . -name "*.java" -type f -exec javac -p . -d ../bin {} \;
 ```
@@ -84,15 +86,26 @@ java RunModelTests
 ```txt
 Welcome to the Max Profit Data Preservation Simulator!
 ===========================================
+
 Please enter an option: (G)enerate/(F)ile/(Q)uit:
 > F
 Please enter the file name:
 F > figure_3_sensor_network.sn
 
+Where is your installation of cs2.exe located?
+(".") > $PATH_TO_CS2
+
 Running models...
 =================
+Greedy:
 Cost: 6412 µJ
 Profit: 9452 µJ
+
+CS2 (Optimal):
+Saved flow network in file "cs2_tmp_20230518164514.inp"!
+Cost: 6406 µJ
+Profit: 9458 µJ
+
 ```
 
 ## Related Projects
