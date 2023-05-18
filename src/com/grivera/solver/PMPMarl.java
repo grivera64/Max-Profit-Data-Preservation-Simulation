@@ -28,9 +28,9 @@ public class PMPMarl {
     double epsilon = .2;
     int delta = 1;
     int beta = 2;
-    int w = 10;
+    int w = 1000;
     double storageReward = 100;
-    double nonStorageReward = -10;
+    double nonStorageReward = 0;
 
     public PMPMarl(Network network) {
         // super(network);
@@ -77,7 +77,7 @@ public class PMPMarl {
         // initialize empty Q-table
 
         state.setQTable();
-
+        String lastStateTransition="";
         for (int i = 0; i < epi; i++) {// learning Stage
             //System.out.println("reset");
             // agent j is at source node Sj
@@ -120,13 +120,13 @@ public class PMPMarl {
                             weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
                             weight += agent.getNextLocation().calculateReceivingCost();
                             state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    (weight) / storageReward);
+                                    storageReward);
                         } else {
                             double weight = 0.0;
                             weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
                             weight += agent.getNextLocation().calculateReceivingCost();
                             state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    (weight) / nonStorageReward);
+                                    nonStorageReward);
                         }
                     }
                     //initializing reward values if necessary
@@ -138,13 +138,13 @@ public class PMPMarl {
                             weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
                             weight += agent.getNextLocation().calculateReceivingCost();
                             state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    (weight) / storageReward);
+                                    storageReward);
                         } else {
                             double weight = 0.0;
                             weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
                             weight += agent.getNextLocation().calculateReceivingCost();
                             state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    (weight) / nonStorageReward);
+                                    nonStorageReward);
                         }
                     }
                     //after this add to sum
@@ -165,6 +165,7 @@ public class PMPMarl {
                                                                                                             // being
                                                                                                             // picked
                 Q.put(sStateTState, newQValue);
+                lastStateTransition = sStateTState;
                 // s=t move to next state
                 // for each agent:
                 // so currentlocation=nextLocation
@@ -228,9 +229,10 @@ public class PMPMarl {
                 }
             }
             // update state transition reward value
-            // for each state transition update transition reward
+            // for the LAST state transition, update transition reward
             //
-            for (int j = 0; j < state.stateTransitions.size(); j++) {
+            //commented out code below is for updating EVERY state transition in the episode
+            /*for (int j = 0; j < state.stateTransitions.size(); j++) {
                 String transition = state.stateTransitions.get(j);
 
                 double totalReward = 0.0;
@@ -249,10 +251,30 @@ public class PMPMarl {
 
                 }
                 state.stateTransitionReward.put(transition, totalReward);
-            }
-            // update Q value
+            }*/
+            String transition = lastStateTransition;
+
+                double totalReward = 0.0;
+                for (int c = 0; c < state.getAgents().size(); c++) {
+                    Agent agent = state.getAgents().get(c);
+                    /*if (j + 1 < agent.getRoute().size()) {// if j+1 is less than the route size, then node changed in
+                                                          // state transition
+                        // first transition is route.j to route j+1
+                        //System.out.println(agent.getRoute().get(j)+" j: " +j);
+                        //System.out.println(agent.getRoute().get(j+1) +" j +1: "+ (j+1));
+                        totalReward += state.edgeReward.get(agent.getRoute().get(j)).get(agent.getRoute().get(j + 1));
+                    } else {// else node didnt change in state transition
+
+                    }*/
+                    // int index = Math.min(j,agent.getRoute().size()-1);
+                    totalReward+=state.edgeReward.get(agent.getRoute().get(agent.getRoute().size()-2)).get(agent.getRoute().get(agent.getRoute().size()-1));
+
+                }
+                state.stateTransitionReward.put(transition, totalReward);
+
+            // update Q value for last state transition
             Map<String, Double> Q = state.getQTable();
-            for (int j = 0; j < state.stateTransitions.size(); j++) {
+            /*for (int j = 0; j < state.stateTransitions.size(); j++) {
                 String transition = state.stateTransitions.get(j);
                 //System.out.println("transitionm "+transition);
                 double newQvalue = (1 - alpha) * Q.get(transition) + alpha
@@ -260,7 +282,13 @@ public class PMPMarl {
                                 + gamma * state.maxQNextTransition.get(transition));
                                 //System.out.println("got new q value");
                 Q.put(transition, newQvalue);
-            }
+            }*/
+            double newQvalue = (1 - alpha) * Q.get(transition) + alpha
+                        * (state.stateTransitionReward.get(transition)
+                                + gamma * state.maxQNextTransition.get(transition));
+                                //System.out.println("got new q value");
+                Q.put(transition, newQvalue);
+            
             // reset for new episode
         } // end of each episode in learning stage
         for (int i = 0; i < state.getAgents().size(); i++) {
@@ -276,9 +304,10 @@ public class PMPMarl {
             //System.out.println("inf loop");
             count++;
 
-            if(count>60){
+            /*if(count>60){
                 System.exit(0);
-            }
+            }*/
+            //System.out.println("cost for u to v"+ );
             findNextStateExecution(state);
             // add route, add cost
             for (int i = 0; i < state.getAgents().size(); i++) {
