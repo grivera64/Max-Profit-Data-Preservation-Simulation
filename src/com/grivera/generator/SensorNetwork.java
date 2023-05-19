@@ -13,9 +13,9 @@ import java.io.PrintWriter;
 import java.util.*;
 
 /**
- * An implementation of a com.grivera.generator.Network that contains Data and
+ * An implementation of a Network that contains Data and
  * Storage Sensor Nodes
- * 
+ *
  * @see Network
  */
 public class SensorNetwork implements Network {
@@ -34,8 +34,8 @@ public class SensorNetwork implements Network {
     private final double transmissionRange;
 
     /**
-     * Constructor to create a Sensor com.grivera.generator.Network
-     * 
+     * Constructor to create a Sensor Network
+     *
      * @param x  the width of the network (in meters)
      * @param y  the length of the network (in meters)
      * @param N  the number of nodes
@@ -69,7 +69,7 @@ public class SensorNetwork implements Network {
     }
 
     /**
-     * Copy constructor to create a Sensor com.grivera.generator.Network from an .sn
+     * Copy constructor to create a Sensor Network from an .sn
      * file.
      *
      * <p>
@@ -145,7 +145,7 @@ public class SensorNetwork implements Network {
                     case "d" ->
                             new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
                     case "s" ->
-                        new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
+                            new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
                     case "t" ->
                             new TransitionNode(x, y, this.transmissionRange);
                     default ->
@@ -168,6 +168,20 @@ public class SensorNetwork implements Network {
         }
     }
 
+    /**
+     * Wrapped constructor to create a Sensor Network
+     *
+     * @param x  the width of the network (in meters)
+     * @param y  the length of the network (in meters)
+     * @param N  the number of nodes
+     * @param tr the transmission range of the nodes (in meters)
+     * @param p  the number of Data Nodes in the network
+     * @param q  the number of data packets each Data Node has
+     * @param s  the number of Storage Nodes in the network
+     * @param m  the storage capacity each Storage nodes has
+     * @param Vl the minimum value of a data packet (inclusive)
+     * @param Vh the maximum value of a data packet (inclusive)
+     */
     public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
         SensorNetwork network;
         int attempts = 0;
@@ -198,10 +212,56 @@ public class SensorNetwork implements Network {
         return network;
     }
 
+    /**
+     * Wrapped copy constructor to create a Sensor Network from an .sn
+     * file.
+     *
+     * <p>
+     * </p>
+     *
+     * The file must follow the following format:
+     * <p>
+     * </p>
+     * width length transmission_range
+     * <p>
+     * data_packets_per_node storage_capacity_per_node
+     * <p>
+     * total_nodes battery_capacity_per_node
+     * <p>
+     * (d/s) id x y
+     * <p>
+     * ...
+     *
+     * @param fileName the path to the .sn file
+     */
     public static SensorNetwork from(String fileName) {
         return new SensorNetwork(fileName);
     }
 
+    /**
+     * Copy constructor to create a Sensor Network from an .sn
+     * file with new overflow packet and storage capacity counts.
+     *
+     * <p>
+     * </p>
+     *
+     * The file must follow the following format:
+     * <p>
+     * </p>
+     * width length transmission_range
+     * <p>
+     * data_packets_per_node storage_capacity_per_node
+     * <p>
+     * total_nodes battery_capacity_per_node
+     * <p>
+     * (d/s) id x y
+     * <p>
+     * ...
+     *
+     * @param fileName the path to the .sn file
+     * @param overflowPackets the number of packets each Data Node has
+     * @param storageCapacity the number of storage spaces each Storage Node has
+     */
     public static SensorNetwork from(String fileName, int overflowPackets, int storageCapacity) {
         SensorNetwork sn = new SensorNetwork(fileName);
         sn.setOverflowPackets(overflowPackets);
@@ -583,5 +643,9 @@ public class SensorNetwork implements Network {
     public int calculateProfitOf(DataNode from, StorageNode to) {
         int cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
+    }
+
+    public SensorNode getSensorNodeByUuid(int uuid) {
+        return this.nodes.get(uuid - 1);
     }
 }
