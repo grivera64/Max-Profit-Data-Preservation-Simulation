@@ -27,7 +27,12 @@ public class RunModelTests {
             case 'F', 'f' ->  network = readNetwork();
             case 'G', 'g' -> {
                 network = generateNetwork();
-                network.save("network.sn");
+                System.out.print("Please name the network:\n(\"network\".sn) > ");
+                String networkName = keyboard.nextLine();
+                if (!networkName.matches("^[A-za-z0-9._-][A-za-z0-9._-]{0,255}$")) {
+                    networkName = "network";
+                }
+                network.save(String.format("%s.sn", networkName));
             }
             default -> {
                 System.out.println("Thank you for using Max-Profit-Data-Preservation-Simulator!");
@@ -47,6 +52,14 @@ public class RunModelTests {
         }
         System.out.println();
 
+        System.out.print("How many episodes should MARL run?\n(100) > ");
+        String episodesString = keyboard.nextLine();
+        int episodes = 100;
+        if (episodesString.matches("\\d+")) {
+            episodes = Integer.parseInt(episodesString);
+        }
+        System.out.println();
+
         System.out.println("Running models...");
         System.out.println("=================");
 
@@ -56,6 +69,8 @@ public class RunModelTests {
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.println();
+        model.printRoute();
+        System.out.println();
 
         try {
             System.out.println("CS2 (Optimal):");
@@ -63,6 +78,8 @@ public class RunModelTests {
             model.run();
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+            System.out.println();
+            model.printRoute();
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
@@ -70,8 +87,14 @@ public class RunModelTests {
             System.out.println();
         }
 
-        PMPMarl marl = new PMPMarl(network);
-        marl.pmpMarl(100);
+        System.out.printf("MARL (%d episodes):\n", episodes);
+        model = new PMPMarl(network);
+        model.run(episodes);
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.println();
+        model.printRoute();
+        System.out.println();
     }
 
     public static Network readNetwork() {

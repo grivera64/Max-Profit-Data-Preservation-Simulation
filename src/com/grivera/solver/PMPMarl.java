@@ -1,12 +1,6 @@
 package com.grivera.solver;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.Lists;
 
@@ -15,62 +9,68 @@ import com.grivera.generator.SensorNetwork;
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.StorageNode;
 import com.grivera.generator.sensors.SensorNode;
-import com.grivera.solver.Agent;
-import com.grivera.solver.NetState;
 
-public class PMPMarl {
-    private Network network;
+public class PMPMarl extends AbstractModel {
     private int dataPacketCount;
     private int storageCapacity;
     private List<DataNode> dNodes;
-    double alpha = .1;
-    double gamma = .3;
-    double epsilon = .2;
-    int delta = 1;
-    int beta = 2;
-    int w = 1000;
-    double storageReward = 100;
-    double nonStorageReward = 0;
+    private static final double alpha = .1;
+    private static final double gamma = .3;
+    private static final double epsilon = .2;
+    private static final int delta = 1;
+    private static final int beta = 2;
+    private static final int w = 1000;
+    private static final double storageReward = 100;
+    private static final double nonStorageReward = 0;
+
+    private int totalCost;
+    private int totalProfit;
+    private NetState finalState;
 
     public PMPMarl(Network network) {
-        // super(network);
-        this.network = network;
+        super(network);
         setField();
     }
 
     public PMPMarl(String fileName) {
-        // super(fileName);
-        this.network = SensorNetwork.from(fileName);
+        super(fileName);
         setField();
     }
 
     public PMPMarl(String fileName, int overflowPackets, int storageCapacity) {
-        // super(fileName, overflowPackets, storageCapacity);
-        this.network = SensorNetwork.from(fileName, overflowPackets, storageCapacity);
+        super(fileName, overflowPackets, storageCapacity);
         setField();
     }
 
     private void setField() {
-        this.dataPacketCount = ((SensorNetwork) network).getDataPacketCount();
+        Network network = this.getNetwork();
+        this.dataPacketCount = network.getDataPacketCount();
         this.dNodes = network.getDataNodes();
-        this.storageCapacity = ((SensorNetwork) network).getStorageCapacity();
+        this.storageCapacity = network.getStorageCapacity();
     }
 
-    public void pmpMarl(int epi) {
+    public void run() {
+        this.run(1);
+    }
 
-        int cost = 0;
+    public void run(int epi) {
+        super.run(epi);
+
+        int cost;
         int min = java.lang.Integer.MAX_VALUE;
         // create state object with nodes and an agent for each packet
-        NetState state = new NetState(this.network.getSensorNodes().size(),
-                this.network.getDataNodes().size() * dataPacketCount);
+        NetState state = new NetState(this.getNetwork().getSensorNodes().size(),
+                this.getNetwork().getDataNodes().size() * dataPacketCount);
 
         // for each agent/packet set current/original location and value
         int packetCount = 0;
-        for (int i = 0; i < this.dNodes.size(); i++) {
-            for (int j = 0; j < this.dataPacketCount; j++) {
-                state.getAgents().get(packetCount).setCurrentLocation(this.dNodes.get(i));
-                state.getAgents().get(packetCount).setOriginalLocation(this.dNodes.get(i));
-                state.getAgents().get(packetCount).setPacketValue(this.dNodes.get(i).getOverflowPacketValue());
+        Agent currAgent;
+        for (DataNode dn : this.dNodes) {
+            for (int j = 0; j < dn.getOverflowPackets(); j++) {
+                currAgent = state.getAgents().get(packetCount);
+                currAgent.setCurrentLocation(dn);
+                currAgent.setOriginalLocation(dn);
+                currAgent.setPacketValue(dn.getOverflowPacketValue());
                 packetCount++;
             }
         }
@@ -350,17 +350,10 @@ public class PMPMarl {
             profitOfRoute += agent.getPacketValue();
         }
         profitOfRoute-=costOfRoute;
-        System.out.println("The total cost of MARL packet preservation: " + costOfRoute);
-        System.out.println("The total profit of MARL packet preservation: " + profitOfRoute);
-        //lets print the path for each agent to look at the path to the storage node
-        for(int i=0;i<state.getAgents().size();i++){
-            Agent agent = state.getAgents().get(i);
-            System.out.println("Path for agent starting at node: "+agent.getRoute().get(0)+" and ending at: "+agent.getRoute().get(agent.getRoute().size()-1));
-            System.out.println("agent original: "+agent.getOriginalLocation());
-            for(int j=0; j<agent.getRoute().size();j++){
-                System.out.println("    "+agent.getRoute().get(j));
-            }
-        }
+
+        this.totalCost = costOfRoute;
+        this.totalProfit = profitOfRoute;
+        this.finalState = state;
     }
 
     private double maxQNextState(NetState state) {
@@ -712,7 +705,7 @@ public class PMPMarl {
                 // hops: "+possibleHops.toString());
                 continue;
             }
-            neighbors = ((SensorNetwork) network).getNeighbors(agent.getCurrentLocation());
+            neighbors = ((SensorNetwork) this.getNetwork()).getNeighbors(agent.getCurrentLocation());
             possibleHops = new ArrayList<>(neighbors);
             possibleTravels.add(possibleHops);
             // System.out.println("agent at node: "+ agent.getCurrentLocation()+" possible
@@ -737,7 +730,7 @@ public class PMPMarl {
                 possibleTravels.add(possibleHops);
                 continue;
             }
-            neighbors = ((SensorNetwork) network).getNeighbors(agent.getNextLocation());
+            neighbors = ((SensorNetwork) this.getNetwork()).getNeighbors(agent.getNextLocation());
             possibleHops = new ArrayList<>(neighbors);
             possibleTravels.add(possibleHops);
         }
@@ -745,5 +738,34 @@ public class PMPMarl {
         jointActions = Lists.cartesianProduct(possibleTravels);
         return jointActions;
 
+    }
+
+    public void printRoute() {
+        if (!this.hasRan()) {
+            throw new IllegalStateException("Model hasn't been run yet!");
+        }
+
+        NetState state = this.finalState;
+        StringJoiner str;
+        List<SensorNode> route;
+        for (Agent agent : state.getAgents()) {
+            route = agent.getRoute();
+            System.out.printf("%s -> %s\n", route.get(0).getName(), route.get(agent.getRoute().size() - 1).getName());
+            str = new StringJoiner(" -> ", "[", "]");
+            for (SensorNode node : route) {
+                str.add(node.getName());
+            }
+            System.out.printf("\t%s\n", str);
+        }
+    }
+
+    public int getTotalCost() {
+        super.getTotalCost();
+        return this.totalCost;
+    }
+
+    public int getTotalProfit() {
+        super.getTotalProfit();
+        return this.totalProfit;
     }
 }

@@ -340,7 +340,8 @@ public class SensorNetwork implements Network {
     public double getLength() {
         return this.length;
     }
-    
+
+    @Override
     public int getDataPacketCount() {
         return dataPacketCount;
     }
@@ -349,6 +350,7 @@ public class SensorNetwork implements Network {
         this.dataPacketCount = dataPacketCount;
     }
 
+    @Override
     public int getStorageCapacity() {
         return storageCapacity;
     }
@@ -359,8 +361,18 @@ public class SensorNetwork implements Network {
     }
 
     @Override
+    public int getSensorNodeCount() {
+        return this.nodes.size();
+    }
+
+    @Override
     public List<DataNode> getDataNodes() {
         return Collections.unmodifiableList(this.dNodes);
+    }
+
+    @Override
+    public int getDataNodeCount() {
+        return this.dNodes.size();
     }
 
     @Override
@@ -369,8 +381,18 @@ public class SensorNetwork implements Network {
     }
 
     @Override
+    public int getStorageNodeCount() {
+        return this.sNodes.size();
+    }
+
+    @Override
     public List<TransitionNode> getTransitionNodes() {
         return Collections.unmodifiableList(this.tNodes);
+    }
+
+    @Override
+    public int getTransitionNodeCount() {
+        return this.tNodes.size();
     }
 
     /**
@@ -486,10 +508,10 @@ public class SensorNetwork implements Network {
      */
     @Override
     public void saveAsCsInp(String fileName) {
-        final int supply = this.dataPacketCount * this.dNodes.size();
+        final int supply = this.dataPacketCount * this.getDataNodeCount();
         final int demand = -supply;
 
-        final int totalNodes = this.dNodes.size() + this.sNodes.size() + 3;
+        final int totalNodes = this.getDataNodeCount() + this.getStorageNodeCount() + 3;
         final int totalEdges = this.getEdgeCount();
 
         File file = new File(fileName);
@@ -515,7 +537,7 @@ public class SensorNetwork implements Network {
             /* Path from Source to DN is always 0 cost (not represented in the network) */
             for (DataNode dn : this.dNodes) {
                 writer.printf("c Source -> %s\n", dn.getName());
-                writer.printf("a %d %d %d %d %d\n", 0, dn.getUuid(), 0, this.dataPacketCount, 0);
+                writer.printf("a %d %d %d %d %d\n", 0, dn.getId(), 0, this.dataPacketCount, 0);
             }
             writer.println();
 
@@ -525,12 +547,12 @@ public class SensorNetwork implements Network {
                 for (StorageNode sn : this.sNodes) {
                     writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
                     profit = this.calculateProfitOf(dn, sn);
-                    writer.printf("a %d %d %d %d %d\n", dn.getUuid(), sn.getUuid(),
+                    writer.printf("a %d %d %d %d %d\n", dn.getId(), this.sNodes.indexOf(sn) + this.dNodes.size() + 1,
                             0, this.dataPacketCount, -profit
                     );
                 }
                 writer.printf("c %s to Dummy Node\n", dn.getName());
-                writer.printf("a %d %d %d %d %d\n", dn.getUuid(), totalNodes - 2, 0, this.dataPacketCount, 0);
+                writer.printf("a %d %d %d %d %d\n", dn.getId(), totalNodes - 2, 0, this.dataPacketCount, 0);
                 writer.println();
             }
 
@@ -538,7 +560,7 @@ public class SensorNetwork implements Network {
             writer.println("c SNs to Sink");
             for (SensorNode sn : this.sNodes) {
                 writer.printf("a %d %d %d %d %d\n",
-                        sn.getUuid(), totalNodes - 1, 0, this.storageCapacity, 0);
+                        sn.getId() + this.getDataNodeCount(), totalNodes - 1, 0, this.storageCapacity, 0);
             }
             writer.println("c Dummy to Sink");
             writer.printf("a %d %d %d %d %d\n", totalNodes - 2, totalNodes - 1, 0, supply, 0);
@@ -647,5 +669,29 @@ public class SensorNetwork implements Network {
 
     public SensorNode getSensorNodeByUuid(int uuid) {
         return this.nodes.get(uuid - 1);
+    }
+
+    @Override
+    public DataNode getDataNodeById(int id) {
+        if (id < 1 || id > this.getDataNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid DN ID %d", id));
+        }
+        return this.dNodes.get(id - 1);
+    }
+
+    @Override
+    public StorageNode getStorageNodeById(int id) {
+        if (id < 1 || id > this.getStorageNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid SN ID %d", id));
+        }
+        return this.sNodes.get(id - 1);
+    }
+
+    @Override
+    public TransitionNode getTransitionNodeById(int id) {
+        if (id < 1 || id > this.getTransitionNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid TN ID %d", id));
+        }
+        return this.tNodes.get(id - 1);
     }
 }

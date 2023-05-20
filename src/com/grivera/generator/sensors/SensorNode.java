@@ -113,4 +113,5 @@ public abstract class SensorNode {
     }
 
     public abstract void resetPackets();
+    public abstract int getId();
 }

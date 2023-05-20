@@ -55,6 +55,11 @@ public class Cs2Model extends AbstractModel {
         }
     }
 
+    public void run(int episodes) {
+        System.out.println("Warning: Ignoring episodes count; defaulting to 1...");
+        this.run();
+    }
+
     public void run() {
         super.run();
 
@@ -113,6 +118,9 @@ public class Cs2Model extends AbstractModel {
 
         this.flows = new ArrayList<>();
         try (Scanner fileScanner = new Scanner(file)) {
+            if (!fileScanner.hasNext()) {
+                System.err.println("WARNING: EMPTY FILE!");
+            }
             while (fileScanner.hasNext()) {
                 lineSplit = fileScanner.nextLine().split("\\s+");
 
@@ -124,12 +132,12 @@ public class Cs2Model extends AbstractModel {
                         srcId = Integer.parseInt(lineSplit[1]);
                         dstId = Integer.parseInt(lineSplit[2]);
 
-                        if (srcId < 1 || dstId >= network.getSensorNodes().size()) {
+                        if (srcId < 1 || dstId > network.getDataNodeCount() + network.getStorageNodeCount()) {
                             break;
                         }
 
-                        tmpSrc = network.getSensorNodeByUuid(srcId);
-                        tmpDst = network.getSensorNodeByUuid(dstId);
+                        tmpSrc = network.getDataNodeById(srcId);
+                        tmpDst = network.getStorageNodeById(dstId - network.getDataNodeCount());
 
                         tmpFlow = Integer.parseInt(lineSplit[3]);
                         this.flows.add(Tuple.of(tmpSrc, tmpDst, tmpFlow));
@@ -149,6 +157,23 @@ public class Cs2Model extends AbstractModel {
     @Override
     public int getTotalProfit() {
         return this.totalProfit;
+    }
+
+    @Override
+    public void printRoute() {
+        StringJoiner str;
+        Network network = this.getNetwork();
+        for (Tuple<SensorNode, SensorNode, Integer> tuple : this.flows) {
+            if (tuple.third() > 0) {
+                System.out.printf("%s -> %s (flow = %d)\n", tuple.first().getName(), tuple.second().getName(), tuple.third());
+
+                str = new StringJoiner(" -> ", "[", "]");
+                for (SensorNode n : network.getMinCostPath(tuple.first(), tuple.second())) {
+                    str.add(n.getName());
+                }
+                System.out.printf("\t%s\n", str);
+            }
+        }
     }
 
     @Override

@@ -8,12 +8,14 @@ package com.grivera.generator.sensors;
 public class DataNode extends SensorNode {
 
     private static int idCounter = 1;
+    private int id;
     private int overflowPackets;
     private int overflowPacketsValue;
     private int packetsLeft;
 
     public DataNode(double x, double y, double tr, int overflowPackets, int overflowPacketsValue) {
-        super(x, y, tr, String.format("DN%02d", idCounter++));
+        super(x, y, tr, String.format("DN%02d", idCounter));
+        this.id = idCounter++;
         this.setOverflowPackets(overflowPackets);
         this.overflowPacketsValue = overflowPacketsValue;
     }
@@ -49,6 +51,11 @@ public class DataNode extends SensorNode {
     @Override
     public void resetPackets() {
         this.packetsLeft = this.overflowPackets;
+    }
+
+    @Override
+    public int getId() {
+        return this.id;
     }
 
     public int getPacketsLeft() {
