@@ -86,11 +86,11 @@ public class Agent {
     }
 
     public void addToRoute() {
-        if(route.isEmpty()){
+        if (route.isEmpty()) {
             route.add(nextLocation);
             return;
         }
-        if(!(route.get(route.size()-1)==nextLocation)){
+        if (!(route.get(route.size() - 1) == nextLocation)) {
             route.add(nextLocation);
         }
         
@@ -101,13 +101,13 @@ public class Agent {
     }
 
     public int calculateCostOfPath() {
-        int totalCost=0;
-        for (int i=1; i<route.size(); i++) {
-            SensorNode prevNode = route.get(i-1);
+        int totalCost = 0;
+        for (int i = 1; i < route.size(); i++) {
+            SensorNode prevNode = route.get(i - 1);
             SensorNode currNode = route.get(i);
 
-            totalCost+=prevNode.calculateTransmissionCost(currNode);
-            totalCost+=currNode.calculateReceivingCost();
+            totalCost += prevNode.calculateTransmissionCost(currNode);
+            totalCost += currNode.calculateReceivingCost();
         }
         return totalCost;
     }

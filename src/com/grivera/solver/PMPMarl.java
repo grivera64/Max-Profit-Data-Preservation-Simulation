@@ -11,9 +11,6 @@ import com.grivera.generator.sensors.StorageNode;
 import com.grivera.generator.sensors.SensorNode;
 
 public class PMPMarl extends AbstractModel {
-    private int dataPacketCount;
-    private int storageCapacity;
-    private List<DataNode> dNodes;
     private static final double alpha = .1;
     private static final double gamma = .3;
     private static final double epsilon = .2;
@@ -22,7 +19,9 @@ public class PMPMarl extends AbstractModel {
     private static final int w = 1000;
     private static final double storageReward = 100;
     private static final double nonStorageReward = 0;
-
+    private int dataPacketCount;
+    private int storageCapacity;
+    private List<DataNode> dNodes;
     private int totalCost;
     private int totalProfit;
     private NetState finalState;
@@ -56,11 +55,13 @@ public class PMPMarl extends AbstractModel {
     public void run(int epi) {
         super.run(epi);
 
+        Network network = this.getNetwork();
+
         int cost;
         int min = java.lang.Integer.MAX_VALUE;
         // create state object with nodes and an agent for each packet
-        NetState state = new NetState(this.getNetwork().getSensorNodes().size(),
-                this.getNetwork().getDataNodes().size() * dataPacketCount);
+        NetState state = new NetState(network.getSensorNodeCount(),
+                network.getDataNodeCount() * dataPacketCount);
 
         // for each agent/packet set current/original location and value
         int packetCount = 0;
@@ -77,7 +78,7 @@ public class PMPMarl extends AbstractModel {
         // initialize empty Q-table
 
         state.setQTable();
-        String lastStateTransition="";
+        String lastStateTransition = "";
         for (int i = 0; i < epi; i++) {// learning Stage
             //System.out.println("reset");
             // agent j is at source node Sj
@@ -90,22 +91,12 @@ public class PMPMarl extends AbstractModel {
             }
             cost = 0;
             // at least one agent has not arrived at a storage node
-            while (state.allAgentsAtStorage() == false) {
+            while (!state.allAgentsAtStorage()) {
                 // System.out.println(state.encodeState());
                 // find next state t using st. trans. rule
                 findNextState(state, epsilon);
 
-                for (int j = 0; j < state.getAgents().size(); j++) {
-                    Agent agent = state.getAgents().get(j);
-                    int travelCost = agent.getTravelCost();
-                    int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                    int receiveCost = agent.getNextLocation().calculateReceivingCost();
-                    if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
-                        agent.setTravelCost(travelCost + transmitCost + receiveCost);
-                    }
-
-                    agent.addToRoute();
-                }
+                moveAgentsToState(state);
                 // update statereward value
                 double newVal = 0.0;
                 String stateTransition = state.encodeST();
@@ -115,42 +106,18 @@ public class PMPMarl extends AbstractModel {
                     // double newVal =0.0;
                     if (state.edgeReward.get(agent.getCurrentLocation()) == null) {
                         state.edgeReward.put(agent.getCurrentLocation(), new HashMap<>());
-                        if (agent.getNextLocation() instanceof StorageNode) {
-                            double weight = 0.0;
-                            weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                            weight += agent.getNextLocation().calculateReceivingCost();
-                            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    storageReward);
-                        } else {
-                            double weight = 0.0;
-                            weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                            weight += agent.getNextLocation().calculateReceivingCost();
-                            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    nonStorageReward);
-                        }
+                        updateEdgeReward(state, agent);
                     }
                     //initializing reward values if necessary
                     if (state.edgeReward.get(agent.getCurrentLocation()).get(agent.getNextLocation()) == null) {
                         //state.edgeReward.put(agent.getCurrentLocation(), new HashMap<>());
                         //state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation())
-                        if (agent.getNextLocation() instanceof StorageNode) {
-                            double weight = 0.0;
-                            weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                            weight += agent.getNextLocation().calculateReceivingCost();
-                            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    storageReward);
-                        } else {
-                            double weight = 0.0;
-                            weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                            weight += agent.getNextLocation().calculateReceivingCost();
-                            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
-                                    nonStorageReward);
-                        }
+                        updateEdgeReward(state, agent);
                     }
                     //after this add to sum
-                    newVal+=state.edgeReward.get(agent.getCurrentLocation()).get(agent.getNextLocation());
+                    newVal += state.edgeReward.get(agent.getCurrentLocation()).get(agent.getNextLocation());
                 }
-                state.stateTransitionReward.put(stateTransition,newVal);
+                state.stateTransitionReward.put(stateTransition, newVal);
 
                 // update Q value
                 Map<String, Double> Q = state.getQTable();
@@ -172,20 +139,9 @@ public class PMPMarl extends AbstractModel {
                 // storedinStorage = storedInStorageNext
                 // state.packetsStoredInNode(agent.nextLocation) =
                 // state.packetsStoredInNodeNext(agent.nextLocation)
-                for (int j = 0; j < state.getAgents().size(); j++) {
-                    Agent agent = state.getAgents().get(j);
-                    agent.setCurrentLocation(agent.getNextLocation());
-                    agent.setStoredInStorage(agent.getStoredInStorageNext());
-                    if (agent.getCurrentLocation() instanceof StorageNode) {
-                        if (state.packetsStoredInNode.get(agent.getCurrentLocation()) == null) {
-                            state.packetsStoredInNode.put((StorageNode) agent.getCurrentLocation(), 0);
-                        }
-                        state.packetsStoredInNode.put((StorageNode) agent.getCurrentLocation(),
-                                state.packetsStoredInNodeNext.get(agent.getCurrentLocation()));
-                    }
-                }
+                updateState(state);
             } // end while
-              // all agents have arrived at storage node
+            // all agents have arrived at storage node
             for (int j = 0; j < state.getAgents().size(); j++) {
                 Agent agent = state.getAgents().get(j);
                 cost += cost + agent.getTravelCost();
@@ -199,18 +155,18 @@ public class PMPMarl extends AbstractModel {
                     for (int c = 1; c < agent.getRoute().size(); c++) {
                         SensorNode prevNode = agent.getRoute().get(c - 1);
                         SensorNode currNode = agent.getRoute().get(c);
-                        if(prevNode==null||currNode==null){
+                        if (prevNode == null || currNode == null) {
                             System.out.println("node in route is null");
                         }
                         if (state.edgeReward.get(prevNode) == null) {
-                            System.out.println("prev: "+prevNode+", curr: "+currNode);
+                            System.out.println("prev: " + prevNode + ", curr: " + currNode);
                             System.out.println("edge reward value null 1st");
                             System.exit(0);
                             //Map<SensorNode, Double> edge = new HashMap<>();
                             //state.edgeReward.put(prevNode, edge);
                         }
                         if (state.edgeReward.get(prevNode).get(currNode) == null) {
-                            System.out.println("prev: "+prevNode+", curr: "+currNode);
+                            System.out.println("prev: " + prevNode + ", curr: " + currNode);
                             System.out.println("edge reward value null");
                             System.exit(0);
                             /* 
@@ -254,9 +210,8 @@ public class PMPMarl extends AbstractModel {
             }*/
             String transition = lastStateTransition;
 
-                double totalReward = 0.0;
-                for (int c = 0; c < state.getAgents().size(); c++) {
-                    Agent agent = state.getAgents().get(c);
+            double totalReward = 0.0;
+            for (Agent agent : state.getAgents()) {
                     /*if (j + 1 < agent.getRoute().size()) {// if j+1 is less than the route size, then node changed in
                                                           // state transition
                         // first transition is route.j to route j+1
@@ -266,11 +221,11 @@ public class PMPMarl extends AbstractModel {
                     } else {// else node didnt change in state transition
 
                     }*/
-                    // int index = Math.min(j,agent.getRoute().size()-1);
-                    totalReward+=state.edgeReward.get(agent.getRoute().get(agent.getRoute().size()-2)).get(agent.getRoute().get(agent.getRoute().size()-1));
+                // int index = Math.min(j,agent.getRoute().size()-1);
+                totalReward += state.edgeReward.get(agent.getRoute().get(agent.getRoute().size() - 2)).get(agent.getRoute().get(agent.getRoute().size() - 1));
 
-                }
-                state.stateTransitionReward.put(transition, totalReward);
+            }
+            state.stateTransitionReward.put(transition, totalReward);
 
             // update Q value for last state transition
             Map<String, Double> Q = state.getQTable();
@@ -284,11 +239,11 @@ public class PMPMarl extends AbstractModel {
                 Q.put(transition, newQvalue);
             }*/
             double newQvalue = (1 - alpha) * Q.get(transition) + alpha
-                        * (state.stateTransitionReward.get(transition)
-                                + gamma * state.maxQNextTransition.get(transition));
-                                //System.out.println("got new q value");
-                Q.put(transition, newQvalue);
-            
+                    * (state.stateTransitionReward.get(transition)
+                    + gamma * state.maxQNextTransition.get(transition));
+            //System.out.println("got new q value");
+            Q.put(transition, newQvalue);
+
             // reset for new episode
         } // end of each episode in learning stage
         for (int i = 0; i < state.getAgents().size(); i++) {
@@ -299,8 +254,8 @@ public class PMPMarl extends AbstractModel {
             state.resetForEpisode();
         }
         // execution stage
-        int count=0;
-        while (state.allAgentsAtStorage() == false) {
+        int count = 0;
+        while (!state.allAgentsAtStorage()) {
             //System.out.println("inf loop");
             count++;
 
@@ -310,50 +265,66 @@ public class PMPMarl extends AbstractModel {
             //System.out.println("cost for u to v"+ );
             findNextStateExecution(state);
             // add route, add cost
-            for (int i = 0; i < state.getAgents().size(); i++) {
-                Agent agent = state.getAgents().get(i);
-                int travelCost = agent.getTravelCost();
-                int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-                int receiveCost = agent.getNextLocation().calculateReceivingCost();
-                if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
-                    agent.setTravelCost(travelCost + transmitCost + receiveCost);
-                }
-
-                agent.addToRoute();
-            }
+            moveAgentsToState(state);
             // s=t move to next state
             // for each agent:
             // so currentlocation=nextLocation
             // storedinStorage = storedInStorageNext
             // state.packetsStoredInNode(agent.nextLocation) =
             // state.packetsStoredInNodeNext(agent.nextLocation)
-            for (int j = 0; j < state.getAgents().size(); j++) {
-                Agent agent = state.getAgents().get(j);
-                agent.setCurrentLocation(agent.getNextLocation());
-                agent.setStoredInStorage(agent.getStoredInStorageNext());
-                if (agent.getCurrentLocation() instanceof StorageNode) {
-                    if (state.packetsStoredInNode.get(agent.getCurrentLocation()) == null) {
-                        state.packetsStoredInNode.put((StorageNode) agent.getCurrentLocation(), 0);
-                    }
-                    state.packetsStoredInNode.put((StorageNode) agent.getCurrentLocation(),
-                            state.packetsStoredInNodeNext.get(agent.getCurrentLocation()));
-                }
-            }
+            updateState(state);
         }
         // return route, return Cost of Route, return profit of route
         // or just sys.out
         int costOfRoute = 0;
         int profitOfRoute = 0;
-        for (int i = 0; i < state.getAgents().size(); i++) {
-            Agent agent = state.getAgents().get(i);
+        for (Agent agent : state.getAgents()) {
             costOfRoute += agent.calculateCostOfPath();
             profitOfRoute += agent.getPacketValue();
         }
-        profitOfRoute-=costOfRoute;
+        profitOfRoute -= costOfRoute;
 
         this.totalCost = costOfRoute;
         this.totalProfit = profitOfRoute;
         this.finalState = state;
+    }
+
+    private void moveAgentsToState(NetState state) {
+        for (Agent agent : state.getAgents()) {
+            int travelCost = agent.getTravelCost();
+            int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
+            int receiveCost = agent.getNextLocation().calculateReceivingCost();
+            if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
+                agent.setTravelCost(travelCost + transmitCost + receiveCost);
+            }
+
+            agent.addToRoute();
+        }
+    }
+
+    private void updateState(NetState state) {
+        for (Agent agent : state.getAgents()) {
+            agent.setCurrentLocation(agent.getNextLocation());
+            agent.setStoredInStorage(agent.getStoredInStorageNext());
+            if (agent.getCurrentLocation() instanceof StorageNode) {
+                state.packetsStoredInNode.put((StorageNode) agent.getCurrentLocation(),
+                        state.packetsStoredInNodeNext.get((StorageNode) agent.getCurrentLocation()));
+            }
+        }
+    }
+
+    private void updateEdgeReward(NetState state, Agent agent) {
+        double weight = 0.0;
+        weight += agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
+        weight += agent.getNextLocation().calculateReceivingCost();
+
+        if (agent.getNextLocation() instanceof StorageNode) {
+            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
+                    storageReward);
+        } else {
+            state.edgeReward.get(agent.getCurrentLocation()).put(agent.getNextLocation(),
+                    nonStorageReward);
+        }
     }
 
     private double maxQNextState(NetState state) {
@@ -366,8 +337,8 @@ public class PMPMarl extends AbstractModel {
         double max = java.lang.Double.NEGATIVE_INFINITY;
         List<SensorNode> bestJointAction;
         String bestJointActionString = "";
-        for (int i = 0; i < allJointActions.size(); i++) {
-            String nextNextState = encodeStateList(allJointActions.get(i));
+        for (List<SensorNode> jointAction : allJointActions) {
+            String nextNextState = encodeStateList(jointAction);
             String tStateZState = state.encodeTZ(nextNextState);
             if (state.getQTable().get(tStateZState) == null) {
                 // if q value is null, set new initial Q value
@@ -377,10 +348,10 @@ public class PMPMarl extends AbstractModel {
                     Agent agent = state.getAgents().get(j);
                     double weight = 0.0;
                     // transmissionCost
-                    weight += agent.getNextLocation().calculateTransmissionCost(allJointActions.get(i).get(j));
+                    weight += agent.getNextLocation().calculateTransmissionCost(jointAction.get(j));
                     // receivingCost
-                    weight += allJointActions.get(i).get(j).calculateReceivingCost();
-                    if (allJointActions.get(i).get(j) instanceof StorageNode) {
+                    weight += jointAction.get(j).calculateReceivingCost();
+                    if (jointAction.get(j) instanceof StorageNode) {
                         sum += storageReward / weight;
                     } else {
                         sum += nonStorageReward / weight;
@@ -391,16 +362,16 @@ public class PMPMarl extends AbstractModel {
             }
             if (state.getQTable().get(tStateZState) > max) {
                 max = state.getQTable().get(tStateZState);
-                bestJointAction = allJointActions.get(i);
+                bestJointAction = jointAction;
                 bestJointActionString = tStateZState;
             }
         }
         String sStateTState = state.encodeST();
-       // System.out.println("key for max q: "+ sStateTState+" and max: "+max);
+        // System.out.println("key for max q: "+ sStateTState+" and max: "+max);
         state.maxQNextTransition.put(sStateTState, max);
         //if(state.maxQNextTransition.get(sStateTState) ==null) {
-         //   System.out.println("max Q bug");
-       // }
+        //   System.out.println("max Q bug");
+        // }
         return max;
     }
 
@@ -410,37 +381,24 @@ public class PMPMarl extends AbstractModel {
         double max = java.lang.Double.NEGATIVE_INFINITY;
         List<SensorNode> bestJointAction = allJointActions.get(0);
         String bestStateTransition = "";
-        for (int i = 0; i < allJointActions.size(); i++) {
-            String nextState = encodeStateList(allJointActions.get(i));
-            String sStateTState = state.encodeST(nextState);
 
-            if (state.getQTable().get(sStateTState) == null) {
-                // if q value is null, set new initial Q value
-                //
-                double sum = 0.0;
-                for (int j = 0; j < state.getAgents().size(); j++) {
-                    Agent agent = state.getAgents().get(j);
-                    double weight = 0.0;
-                    // transmissionCost
-                    weight += agent.getCurrentLocation().calculateTransmissionCost(allJointActions.get(i).get(j));
-                    // receivingCost
-                    weight += allJointActions.get(i).get(j).calculateReceivingCost();
-                    if (allJointActions.get(i).get(j) instanceof StorageNode) {
-                        sum += storageReward / weight;
-                    } else {
-                        sum += nonStorageReward / weight;
-                    }
-                }
-                state.getQTable().put(sStateTState, sum);
-                // state.getQTable().put(sStateTState, 0.0);
-            }
+        String nextState;
+        String sStateTState;
+        for (List<SensorNode> jointAction : allJointActions) {
+            nextState = encodeStateList(jointAction);
+            sStateTState = state.encodeST(nextState);
+            updateQTable(state, jointAction);
             if (state.getQTable().get(sStateTState) > max) {
                 max = state.getQTable().get(sStateTState);
-                bestJointAction = allJointActions.get(i);
+                bestJointAction = jointAction;
                 bestStateTransition = sStateTState;
             }
         }
         // next state has been found
+        updatePacketCount(state, bestJointAction);
+    }
+
+    private void updatePacketCount(NetState state, List<SensorNode> bestJointAction) {
         for (int i = 0; i < state.getAgents().size(); i++) {
             Agent agent = state.getAgents().get(i);
             SensorNode nextLocation = bestJointAction.get(i);
@@ -453,9 +411,7 @@ public class PMPMarl extends AbstractModel {
             if (!(nextLocation instanceof StorageNode)) {
                 continue;
             }
-            if (state.packetsStoredInNodeNext.get(nextLocation) == null) {
-                state.packetsStoredInNodeNext.put((StorageNode) nextLocation, 0);
-            }
+            state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, 0);
             if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
                 continue;
             }
@@ -467,6 +423,32 @@ public class PMPMarl extends AbstractModel {
                     state.packetsStoredInNodeNext.get(nextLocation) + 1);
             agent.setStoredInStorageNext();
 
+        }
+    }
+
+    private void updateQTable(NetState state, List<SensorNode> jointAction) {
+        String nextState = encodeStateList(jointAction);
+        String sStateTState = state.encodeST(nextState);
+
+        if (state.getQTable().get(sStateTState) == null) {
+            // if q value is null, set new initial Q value
+            //
+            double sum = 0.0;
+            for (int j = 0; j < state.getAgents().size(); j++) {
+                Agent agent = state.getAgents().get(j);
+                double weight = 0.0;
+                // transmissionCost
+                weight += agent.getCurrentLocation().calculateTransmissionCost(jointAction.get(j));
+                // receivingCost
+                weight += jointAction.get(j).calculateReceivingCost();
+                if (jointAction.get(j) instanceof StorageNode) {
+                    sum += storageReward / weight;
+                } else {
+                    sum += nonStorageReward / weight;
+                }
+            }
+            state.getQTable().put(sStateTState, sum);
+            // state.getQTable().put(sStateTState, 0.0);
         }
     }
 
@@ -486,74 +468,26 @@ public class PMPMarl extends AbstractModel {
             List<SensorNode> bestJointAction = allJointActions.get(0);
             // System.out.println("joint action 0: "+bestJointAction);
             // System.out.println("allJoint action list size: "+allJointActions.size());
+
+            String nextState;
+            String sStateTState;
             String bestStateTransition = "";
-            for (int i = 0; i < allJointActions.size(); i++) {
-                String nextState = encodeStateList(allJointActions.get(i));
-                String sStateTState = state.encodeST(nextState);
-                if (state.getQTable().get(sStateTState) == null) {
-                    // if q value is null, set new initial Q value
-                    //
-                    double sum = 0.0;
-                    for (int j = 0; j < state.getAgents().size(); j++) {
-                        Agent agent = state.getAgents().get(j);
-                        double weight = 0.0;
-                        // transmissionCost
-                        weight += agent.getCurrentLocation().calculateTransmissionCost(allJointActions.get(i).get(j));
-                        // receivingCost
-                        weight += allJointActions.get(i).get(j).calculateReceivingCost();
-                        if (allJointActions.get(i).get(j) instanceof StorageNode) {
-                            sum += storageReward / weight;
-                        } else {
-                            sum += nonStorageReward / weight;
-                        }
-                    }
-                    state.getQTable().put(sStateTState, sum);
-                }
-                double numerator = Math.pow(state.getQTable().get(sStateTState), state.delta);
-                double denominator = 0.0;
-                for (int j = 0; j < allJointActions.get(i).size(); j++) {
-                    denominator += state.getAgents().get(j).getCurrentLocation()
-                            .calculateTransmissionCost(allJointActions.get(i).get(j));
-                    denominator += allJointActions.get(i).get(j).calculateReceivingCost();
-                }
-                denominator = Math.pow(denominator, state.beta);
+            for (List<SensorNode> jointAction : allJointActions) {
+                nextState = encodeStateList(jointAction);
+                sStateTState = state.encodeST(nextState);
+                updateQTable(state, jointAction);
+                ProbabilityResult pr = getProbabilityResult(state, sStateTState, jointAction);
                 // System.out.println("max calc: "+(numerator/denominator));
-                if (numerator / denominator > max) {
+                if (pr.numerator() / pr.denominator() > max) {
                     // System.out.println("greater than max reached");
-                    max = numerator / denominator;
-                    bestJointAction = allJointActions.get(i);
+                    max = pr.numerator() / pr.denominator();
+                    bestJointAction = jointAction;
                     bestStateTransition = sStateTState;
                 }
             }
             // next state has been found using transition rule
             // System.out.println(bestStateTransition);
-            for (int i = 0; i < state.getAgents().size(); i++) {
-                Agent agent = state.getAgents().get(i);
-                SensorNode nextLocation = bestJointAction.get(i);
-                agent.setNextLocation(nextLocation);
-                // now determine which (if any) agents will be placed in their next state
-
-                if (agent.getStoredInStorage()) {
-                    continue;
-                }
-                if (!(nextLocation instanceof StorageNode)) {
-                    continue;
-                }
-                if (state.packetsStoredInNodeNext.get(nextLocation) == null) {
-                    state.packetsStoredInNodeNext.put((StorageNode) nextLocation, 0);
-                }
-                if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
-                    continue;
-                }
-                // if this point is reached, then packet hasnt been stored yet, its next
-                // location is a storage node
-                // and the storage node is not at capacity
-                // so packet(agent) will be placed at its next location
-                state.packetsStoredInNodeNext.put((StorageNode) nextLocation,
-                        state.packetsStoredInNodeNext.get(nextLocation) + 1);
-                agent.setStoredInStorageNext();
-
-            }
+            updatePacketCount(state, bestJointAction);
             //System.out.println("print beststate "+bestStateTransition);
             state.addStateTransition(bestStateTransition);
         } else {
@@ -564,115 +498,73 @@ public class PMPMarl extends AbstractModel {
             List<List<SensorNode>> allJointActions = generateAllJointActions(state);
             double probDenominator = 0.0;
 
-            for (int i = 0; i < allJointActions.size(); i++) {
-                String nextState = encodeStateList(allJointActions.get(i));
-                String sStateTState = state.encodeST(nextState);
-                if (state.getQTable().get(sStateTState) == null) {
-                    // if q value is null, set new initial Q value
-                    //
-                    double sum = 0.0;
-                    for (int j = 0; j < state.getAgents().size(); j++) {
-                        Agent agent = state.getAgents().get(j);
-                        double weight = 0.0;
-                        // transmissionCost
-                        weight += agent.getCurrentLocation().calculateTransmissionCost(allJointActions.get(i).get(j));
-                        // receivingCost
-                        weight += allJointActions.get(i).get(j).calculateReceivingCost();
-                        if (allJointActions.get(i).get(j) instanceof StorageNode) {
-                            sum += storageReward / weight;
-                        } else {
-                            sum += nonStorageReward / weight;
-                        }
-                    }
-                    state.getQTable().put(sStateTState, sum);
-                    // state.getQTable().put(sStateTState, 1.0);
-                }
-                double numerator = Math.pow(state.getQTable().get(sStateTState), state.delta);
-                double denominator = 0.0;
-                for (int j = 0; j < allJointActions.get(i).size(); j++) {
-                    denominator += state.getAgents().get(j).getCurrentLocation()
-                            .calculateTransmissionCost(allJointActions.get(i).get(j));
-                    denominator += allJointActions.get(i).get(j).calculateReceivingCost();
-                }
-                denominator = Math.pow(denominator, state.beta);
-                probDenominator += numerator / denominator;
+            String nextState;
+            String sStateTState;
+            for (List<SensorNode> jointAction : allJointActions) {
+                nextState = encodeStateList(jointAction);
+                sStateTState = state.encodeST(nextState);
+                updateQTable(state, jointAction);
+                ProbabilityResult pr = getProbabilityResult(state, sStateTState, jointAction);
+                probDenominator += pr.numerator() / pr.denominator();
             }
-            for (int i = 0; i < allJointActions.size(); i++) {
+            for (List<SensorNode> jointAction : allJointActions) {
                 double probNumerator;
 
-                String nextState = encodeStateList(allJointActions.get(i));
-                String sStateTState = state.encodeST(nextState);
+                nextState = encodeStateList(jointAction);
+                sStateTState = state.encodeST(nextState);
 
-                double numerator = Math.pow(state.getQTable().get(sStateTState), state.delta);
-                double denominator = 0.0;
+                ProbabilityResult pr = getProbabilityResult(state, sStateTState, jointAction);
 
-                for (int j = 0; j < allJointActions.get(i).size(); j++) {
-                    denominator += state.getAgents().get(j).getCurrentLocation()
-                            .calculateTransmissionCost(allJointActions.get(i).get(j));
-                    denominator += allJointActions.get(i).get(j).calculateReceivingCost();
-                }
-                denominator = Math.pow(denominator, state.beta);
-
-                probNumerator = numerator / denominator;
+                probNumerator = pr.numerator() / pr.denominator();
                 double actionWeight = probNumerator / probDenominator;
-                actionWeights.put(Objects.hashCode(allJointActions.get(i)), actionWeight);
+                actionWeights.put(Objects.hashCode(jointAction), actionWeight);
             }
             List<SensorNode> randomJointAction = getRandomAction(allJointActions, actionWeights);
             // next (random) action has been found
             // System.out.println(randomJointAction.toString());
 
-            for (int i = 0; i < state.getAgents().size(); i++) {
-                Agent agent = state.getAgents().get(i);
-                SensorNode nextLocation = randomJointAction.get(i);
-                agent.setNextLocation(nextLocation);
-                // now determine which (if any) agents will be placed in their next state
-
-                if (agent.getStoredInStorage()) {
-                    continue;
-                }
-                if (!(nextLocation instanceof StorageNode)) {
-                    continue;
-                }
-                if (state.packetsStoredInNodeNext.get(nextLocation) == null) {
-                    state.packetsStoredInNodeNext.put((StorageNode) nextLocation, 0);
-                }
-                if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
-                    continue;
-                }
-                // if this point is reached, then packet hasnt been stored yet, its next
-                // location is a storage node
-                // and the storage node is not at capacity
-                // so packet(agent) will be placed at its next location
-                state.packetsStoredInNodeNext.put((StorageNode) nextLocation,
-                        state.packetsStoredInNodeNext.get(nextLocation) + 1);
-                agent.setStoredInStorageNext();
-
-            }
-            String nextState = encodeStateList(randomJointAction);
-            String sStateTState = state.encodeST(nextState);
+            updatePacketCount(state, randomJointAction);
+            nextState = encodeStateList(randomJointAction);
+            sStateTState = state.encodeST(nextState);
             state.addStateTransition(sStateTState);
 
         }
     }
 
+    private static ProbabilityResult getProbabilityResult(NetState state, String sStateTState, List<SensorNode> jointAction) {
+        double numerator = Math.pow(state.getQTable().get(sStateTState), state.delta);
+        double denominator = 0.0;
+
+        for (int j = 0; j < jointAction.size(); j++) {
+            denominator += state.getAgents().get(j).getCurrentLocation()
+                    .calculateTransmissionCost(jointAction.get(j));
+            denominator += jointAction.get(j).calculateReceivingCost();
+        }
+        denominator = Math.pow(denominator, state.beta);
+        return new ProbabilityResult(numerator, denominator);
+    }
+
+    private record ProbabilityResult(double numerator, double denominator) {
+    }
+
     private List<SensorNode> getRandomAction(List<List<SensorNode>> allJointActions,
-            Map<Integer, Double> actionWeights) {
+                                             Map<Integer, Double> actionWeights) {
         // calculate total weight
         double totalWeight = 0.0;
         List<SensorNode> randomJointAction = allJointActions.get(0);
         // System.out.println("random joint action 0: "+randomJointAction);
         // System.out.println("joint action list size: "+allJointActions.size());
-        for (int i = 0; i < allJointActions.size(); i++) {
-            totalWeight += actionWeights.get(Objects.hashCode(allJointActions.get(i)));
+        for (List<SensorNode> jointAction : allJointActions) {
+            totalWeight += actionWeights.get(Objects.hashCode(jointAction));
         }
         double randomNum = new Random().nextDouble() * totalWeight;
 
-        for (int i = 0; i < allJointActions.size(); i++) {
-            randomNum -= actionWeights.get(Objects.hashCode(allJointActions.get(i)));
+        for (List<SensorNode> jointAction : allJointActions) {
+            randomNum -= actionWeights.get(Objects.hashCode(jointAction));
 
             if (randomNum <= 0) {
                 // return allJointActions.get(i);
-                randomJointAction = allJointActions.get(i);
+                randomJointAction = jointAction;
                 break;
             }
         }
@@ -681,9 +573,9 @@ public class PMPMarl extends AbstractModel {
     }
 
     private String encodeStateList(List<SensorNode> list) {
-        StringBuilder sb = new StringBuilder("");
-        for (int i = 0; i < list.size(); i++) {
-            sb.append(list.get(i).getUuid());
+        StringBuilder sb = new StringBuilder();
+        for (SensorNode sensorNode : list) {
+            sb.append(sensorNode.getUuid());
         }
         return sb.toString();
     }
@@ -717,9 +609,10 @@ public class PMPMarl extends AbstractModel {
     }
 
     private List<List<SensorNode>> generateAllNextJointActions(NetState state) {
-        List<List<SensorNode>> jointActions = new ArrayList<>();
+        List<List<SensorNode>> jointActions;
         List<List<SensorNode>> possibleTravels = new ArrayList<>();
 
+        SensorNetwork sensorNetwork = (SensorNetwork) this.getNetwork();
         for (Agent agent : state.getAgents()) {
             Set<SensorNode> neighbors;
             List<SensorNode> possibleHops = new ArrayList<>();
@@ -730,7 +623,7 @@ public class PMPMarl extends AbstractModel {
                 possibleTravels.add(possibleHops);
                 continue;
             }
-            neighbors = ((SensorNetwork) this.getNetwork()).getNeighbors(agent.getNextLocation());
+            neighbors = sensorNetwork.getNeighbors(agent.getNextLocation());
             possibleHops = new ArrayList<>(neighbors);
             possibleTravels.add(possibleHops);
         }
