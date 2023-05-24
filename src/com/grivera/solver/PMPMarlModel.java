@@ -10,7 +10,7 @@ import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.StorageNode;
 import com.grivera.generator.sensors.SensorNode;
 
-public class PMPMarl extends AbstractModel {
+public class PMPMarlModel extends AbstractModel {
     private static final double alpha = .1;
     private static final double gamma = .3;
     private static final double epsilon = .2;
@@ -26,17 +26,17 @@ public class PMPMarl extends AbstractModel {
     private int totalProfit;
     private NetState finalState;
 
-    public PMPMarl(Network network) {
+    public PMPMarlModel(Network network) {
         super(network);
         setField();
     }
 
-    public PMPMarl(String fileName) {
+    public PMPMarlModel(String fileName) {
         super(fileName);
         setField();
     }
 
-    public PMPMarl(String fileName, int overflowPackets, int storageCapacity) {
+    public PMPMarlModel(String fileName, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
         setField();
     }
@@ -82,11 +82,10 @@ public class PMPMarl extends AbstractModel {
         for (int i = 0; i < epi; i++) {// learning Stage
             //System.out.println("reset");
             // agent j is at source node Sj
-            for (int j = 0; j < state.getAgents().size(); j++) {
-                SensorNode source = state.getAgents().get(j).getOriginalLocation();
-                state.getAgents().get(j).setCurrentLocation(source);
+            for (Agent agent : state.getAgents()) {
+                agent.resetLocation();
                 // travel cost by agent j
-                state.getAgents().get(j).resetTravel();
+                agent.resetTravel();
                 state.resetForEpisode();
             }
             cost = 0;
@@ -100,12 +99,10 @@ public class PMPMarl extends AbstractModel {
                 // update statereward value
                 double newVal = 0.0;
                 String stateTransition = state.encodeST();
-                for (int j = 0; j < state.getAgents().size(); j++) {
-                    Agent agent = state.getAgents().get(j);
+                for (Agent agent : state.getAgents()) {
                     //System.out.println("curr: "+agent.getCurrentLocation()+", next: "+agent.getNextLocation());
                     // double newVal =0.0;
-                    if (state.edgeReward.get(agent.getCurrentLocation()) == null) {
-                        state.edgeReward.put(agent.getCurrentLocation(), new HashMap<>());
+                    if (state.edgeReward.putIfAbsent(agent.getCurrentLocation(), new HashMap<>()) == null) {
                         updateEdgeReward(state, agent);
                     }
                     //initializing reward values if necessary
@@ -115,7 +112,7 @@ public class PMPMarl extends AbstractModel {
                         updateEdgeReward(state, agent);
                     }
                     //after this add to sum
-                    newVal += state.edgeReward.get(agent.getCurrentLocation()).get(agent.getNextLocation());
+                    newVal += state.edgeReward.get(agent.getCurrentLocation()).getOrDefault(agent.getNextLocation(), 0.0);
                 }
                 state.stateTransitionReward.put(stateTransition, newVal);
 
@@ -142,16 +139,14 @@ public class PMPMarl extends AbstractModel {
                 updateState(state);
             } // end while
             // all agents have arrived at storage node
-            for (int j = 0; j < state.getAgents().size(); j++) {
-                Agent agent = state.getAgents().get(j);
-                cost += cost + agent.getTravelCost();
+            for (Agent agent : state.getAgents()) {
+                cost += agent.getTravelCost();
             }
             if (cost < min) {
                 min = cost;
                 // update edge rewards for each agent's route
-                for (int j = 0; j < state.getAgents().size(); j++) {
+                for (Agent agent : state.getAgents()) {
                     // double netTransitionReward=0.0;
-                    Agent agent = state.getAgents().get(j);
                     for (int c = 1; c < agent.getRoute().size(); c++) {
                         SensorNode prevNode = agent.getRoute().get(c - 1);
                         SensorNode currNode = agent.getRoute().get(c);
@@ -246,9 +241,8 @@ public class PMPMarl extends AbstractModel {
 
             // reset for new episode
         } // end of each episode in learning stage
-        for (int i = 0; i < state.getAgents().size(); i++) {
-            Agent agent = state.getAgents().get(i);
-            agent.setCurrentLocation(agent.getOriginalLocation());
+        for (Agent agent : state.getAgents()) {
+            agent.resetLocation();
             agent.resetTravel();
 
             state.resetForEpisode();

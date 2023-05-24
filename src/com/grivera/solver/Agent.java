@@ -111,4 +111,8 @@ public class Agent {
         }
         return totalCost;
     }
+
+    public void resetLocation() {
+        this.setCurrentLocation(this.getOriginalLocation());
+    }
 }
