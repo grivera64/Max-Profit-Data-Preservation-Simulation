@@ -60,34 +60,16 @@ public class PMPMarlModel extends AbstractModel {
         int cost;
         int min = java.lang.Integer.MAX_VALUE;
         // create state object with nodes and an agent for each packet
-        NetState state = new NetState(network.getSensorNodeCount(),
-                network.getDataNodeCount() * dataPacketCount);
+        NetState state = new NetState(network);
 
-        // for each agent/packet set current/original location and value
-        int packetCount = 0;
-        Agent currAgent;
-        for (DataNode dn : this.dNodes) {
-            for (int j = 0; j < dn.getOverflowPackets(); j++) {
-                currAgent = state.getAgents().get(packetCount);
-                currAgent.setCurrentLocation(dn);
-                currAgent.setOriginalLocation(dn);
-                currAgent.setPacketValue(dn.getOverflowPacketValue());
-                packetCount++;
-            }
-        }
         // initialize empty Q-table
 
         state.setQTable();
         String lastStateTransition = "";
         for (int i = 0; i < epi; i++) {// learning Stage
             //System.out.println("reset");
-            // agent j is at source node Sj
-            for (Agent agent : state.getAgents()) {
-                agent.resetLocation();
-                // travel cost by agent j
-                agent.resetTravel();
-                state.resetForEpisode();
-            }
+            state.resetForEpisode();
+            
             cost = 0;
             // at least one agent has not arrived at a storage node
             while (!state.allAgentsAtStorage()) {
@@ -112,7 +94,7 @@ public class PMPMarlModel extends AbstractModel {
                         updateEdgeReward(state, agent);
                     }
                     //after this add to sum
-                    newVal += state.edgeReward.get(agent.getCurrentLocation()).getOrDefault(agent.getNextLocation(), 0.0);
+                    newVal += state.edgeReward.get(agent.getCurrentLocation()).get(agent.getNextLocation());
                 }
                 state.stateTransitionReward.put(stateTransition, newVal);
 
@@ -526,7 +508,7 @@ public class PMPMarlModel extends AbstractModel {
     }
 
     private static ProbabilityResult getProbabilityResult(NetState state, String sStateTState, List<SensorNode> jointAction) {
-        double numerator = Math.pow(state.getQTable().get(sStateTState), state.delta);
+        double numerator = Math.pow(state.getQTable().get(sStateTState), delta);
         double denominator = 0.0;
 
         for (int j = 0; j < jointAction.size(); j++) {
@@ -534,7 +516,7 @@ public class PMPMarlModel extends AbstractModel {
                     .calculateTransmissionCost(jointAction.get(j));
             denominator += jointAction.get(j).calculateReceivingCost();
         }
-        denominator = Math.pow(denominator, state.beta);
+        denominator = Math.pow(denominator, beta);
         return new ProbabilityResult(numerator, denominator);
     }
 

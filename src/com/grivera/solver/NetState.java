@@ -16,18 +16,29 @@ public class NetState {
     public Map<SensorNode, Map<SensorNode, Double>> edgeReward = new HashMap<>();
     public Map<String, Double> stateTransitionReward = new HashMap<>();
     public List<String> stateTransitions = new ArrayList<>();
-    public final int delta = 1;
-    public final int beta = 2;
     public Map<StorageNode, Integer> packetsStoredInNode = new HashMap<>();
     public Map<StorageNode, Integer> packetsStoredInNodeNext = new HashMap<>();
     public Map<String,Double> maxQNextTransition = new HashMap<>();
 
-    public NetState(int numNodes, int numAgents) {
-        this.numNodes = numNodes;
-        this.numAgents = numAgents;
+    public NetState(Network network) {
+        this.numNodes = network.getSensorNodeCount();
+        this.numAgents = network.getDataNodeCount() * dataPacketCount;
+        
         agents = new ArrayList<Agent>();
-        for (int i = 0; i < numAgents; i++) {
-            agents.add(new Agent());
+        
+        // for each agent/packet set current/original location and value
+        int packetCount = 0;
+        Agent currAgent;
+        for (DataNode dn : network.getDataNodes()) {
+            for (int j = 0; j < dn.getOverflowPackets(); j++) {
+                currAgent = new Agent();
+                currAgent.setCurrentLocation(dn);
+                currAgent.setOriginalLocation(dn);
+                currAgent.setPacketValue(dn.getOverflowPacketValue());
+                
+                agents.add(currAgent);
+                packetCount++;
+            }
         }
     }
 
@@ -38,6 +49,13 @@ public class NetState {
         packetsStoredInNodeNext = new HashMap<>();
         maxQNextTransition = new HashMap<>();
         stateTransitions = new ArrayList<>();
+        
+        // agent j is at source node Sj
+        for (Agent agent : this.agents) {
+            agent.resetLocation();
+            // travel cost by agent j
+            agent.resetTravel();
+        }
     }
 
     public List<Agent> getAgents() {
@@ -69,14 +87,12 @@ public class NetState {
     public boolean allAgentsAtStorage() {
         // returns true if all agents (packets) are stored in a Storage node
         // returns false otherwise
-        boolean flag = true;
         for (Agent agent : agents) {
-            if (agent.getStoredInStorage() == false) {
-                flag = false;
-                break;
+            if (!agent.getStoredInStorage()) {
+                return false;
             }
         }
-        return flag;
+        return true;
     }
 
     public String encodeNextState() {
