@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.grivera.generator.Network;
+import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
 
@@ -22,12 +24,11 @@ public class NetState {
 
     public NetState(Network network) {
         this.numNodes = network.getSensorNodeCount();
-        this.numAgents = network.getDataNodeCount() * dataPacketCount;
+        this.numAgents = network.getDataNodeCount() * network.getDataPacketCount();
         
-        agents = new ArrayList<Agent>();
+        agents = new ArrayList<>();
         
         // for each agent/packet set current/original location and value
-        int packetCount = 0;
         Agent currAgent;
         for (DataNode dn : network.getDataNodes()) {
             for (int j = 0; j < dn.getOverflowPackets(); j++) {
@@ -37,7 +38,6 @@ public class NetState {
                 currAgent.setPacketValue(dn.getOverflowPacketValue());
                 
                 agents.add(currAgent);
-                packetCount++;
             }
         }
     }
