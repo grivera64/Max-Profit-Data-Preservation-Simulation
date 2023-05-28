@@ -63,7 +63,7 @@ javac -cp ".;%PATH_TO_GUAVA%/*" -p . *.java -d ../bin
 
 Mac/Linux:
 ```sh
-find . -name "*.java" -type f -exec javac -cp ".;${PATH_TO_GUAVA}/*" -p . -d ../bin {} \;
+javac -cp ".:${PATH_TO_GUAVA}/*" -p . *.java -d ../bin
 ```
 
 ### 4. Change directories into the binaries folder

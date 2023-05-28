@@ -13,12 +13,6 @@ git clone https://www.github.com/iveney/cs2.git
 
 2. Change directories into the CS2 folder where all the source code is.
 
-Windows:
-```bat
-cd cs2
-```
-
-Mac/Linux:
 ```sh
 cd cs2
 ```
