@@ -17,6 +17,8 @@ public class NetState {
     private Map<String, Double> Q;
     public Map<SensorNode, Map<SensorNode, Double>> edgeReward = new HashMap<>();
     public Map<String, Double> stateTransitionReward = new HashMap<>();
+    public Map<String, Double> stateTransitionProfit = new HashMap<>();
+
     public List<String> stateTransitions = new ArrayList<>();
     public Map<StorageNode, Integer> packetsStoredInNode = new HashMap<>();
     public Map<StorageNode, Integer> packetsStoredInNodeNext = new HashMap<>();
@@ -119,5 +121,12 @@ public class NetState {
 
     public void addStateTransition(String bestStateTransition) {
         stateTransitions.add(bestStateTransition);
+    }
+    public Map<String, Double> getStateTransitionProfit() {
+        return stateTransitionProfit;
+    }
+
+    public void setStateTransitionProfit(Map<String, Double> stateTransitionProfit) {
+        this.stateTransitionProfit = stateTransitionProfit;
     }
 }

@@ -8,9 +8,11 @@ import com.grivera.generator.sensors.SensorNode;
 public class Agent {
     private SensorNode currLocation;
     private SensorNode originalLocation;
+    private SensorNode lastStateLocation;
     private int packetValue;
     private SensorNode nextLocation;
     private int travelCost = 0;
+    private double rewardCol = 0;
     private boolean storedInStorage = false;
     private boolean storedInStorageNext = false;
     private List<SensorNode> route = new ArrayList<SensorNode>();
@@ -47,6 +49,7 @@ public class Agent {
 
     public void resetTravel() {
         travelCost = 0;
+        rewardCol = 0;
         storedInStorage = false;
         storedInStorageNext = false;
         route = new ArrayList<>();
@@ -84,6 +87,12 @@ public class Agent {
     public void setTravelCost(int travelCost) {
         this.travelCost = travelCost;
     }
+    public double getRewardCol() {
+        return rewardCol;
+    }
+    public void setRewardCol(double rewardCol) {
+        this.rewardCol = rewardCol;
+    }
 
     public void addToRoute() {
         if (route.isEmpty()) {
@@ -114,5 +123,13 @@ public class Agent {
 
     public void resetLocation() {
         this.setCurrentLocation(this.getOriginalLocation());
+    }
+
+    public SensorNode getLastStateLocation() {
+        return lastStateLocation;
+    }
+
+    public void setLastStateLocation(SensorNode node) {
+        lastStateLocation=node;
     }
 }
