@@ -2,3 +2,5 @@ out/
 .idea/
 *.txt
 *.exe
+*.class
+.vscode/

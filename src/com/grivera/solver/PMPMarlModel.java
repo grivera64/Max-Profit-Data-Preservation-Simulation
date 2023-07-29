@@ -7,6 +7,7 @@ import com.google.common.collect.Lists;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.generator.sensors.StorageNode;
+import com.grivera.util.ProgressBar;
 import com.grivera.generator.sensors.SensorNode;
 
 public class PMPMarlModel extends AbstractModel {
@@ -62,10 +63,12 @@ public class PMPMarlModel extends AbstractModel {
         NetState state = new NetState(network);
 
         // initialize empty Q-table
-
         state.setQTable();
+
+        ProgressBar bar = new ProgressBar(epi, 50, "Training");
         String lastStateTransition = "";
         for (int i = 0; i < epi; i++) {// learning Stage //line 1
+            bar.step();
             // System.out.println("reset");
             state.resetForEpisode();// handles resetting for lines 3. to 8.
 
