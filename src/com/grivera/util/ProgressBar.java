@@ -69,7 +69,7 @@ public class ProgressBar {
     }
 
     private void printBar() {
-        System.out.print("\r [");
+        System.out.printf("\r %c [", this.spinner[this.currStep % this.spinner.length]);
         int progressCount = (int) ((double) currStep / steps * width);
         for (int i = 1; i < progressCount; i++) {
             System.out.print("=");
@@ -78,13 +78,16 @@ public class ProgressBar {
         for (int i = progressCount; i < width; i++) {
             System.out.print(" ");
         }
-        System.out.printf("] %d/%d (~%.2f ms/it) %s %c",
-            currStep, steps, (double) this.avgStepTime.toMillis() / this.stepCount, title, spinner[currStep % spinner.length]
+        System.out.printf("] %d/%d (~%.2f ms/it) %s",
+            currStep, steps, (double) this.avgStepTime.toMillis() / this.stepCount, title
         );
 
         if (this.isDone()) {
-            System.out.println(" => Done.");
+            System.out.println(" => Done. \t");
         } else {
+            for (int i = 0; i < 15; i++) {
+                System.out.print(" ");
+            }
             System.out.print("\r");
         }
     }
