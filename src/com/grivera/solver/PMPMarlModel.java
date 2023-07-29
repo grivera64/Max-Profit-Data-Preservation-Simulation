@@ -1,6 +1,7 @@
 package com.grivera.solver;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
@@ -666,7 +667,12 @@ public class PMPMarlModel extends AbstractModel {
                 continue;
             }
             neighbors = ((SensorNetwork) this.getNetwork()).getNeighbors(agent.getCurrentLocation());
-            possibleHops = new ArrayList<>(neighbors);
+            possibleHops = neighbors.stream().filter(node -> !agent.getRoute().contains(node)).collect(Collectors.toList());
+
+            // If dead-end, then retrace steps
+            if (possibleHops.size() < 1) {
+                possibleHops.add(agent.getRoute().get(agent.getRoute().indexOf(agent.getCurrentLocation()) - 1));
+            }
             possibleTravels.add(possibleHops);
             // System.out.println("agent at node: "+ agent.getCurrentLocation()+" possible
             // hops: "+possibleHops.toString());
