@@ -10,9 +10,9 @@ import com.grivera.generator.sensors.StorageNode;
 import com.grivera.generator.sensors.SensorNode;
 
 public class PMPMarlModel extends AbstractModel {
-    private double alpha = .5;
-    private double gamma = .3;
-    private double epsilon = .6;
+    private double alpha = .1;
+    private double gamma = .5;
+    private double epsilon = .2;
     private static final int delta = 1;
     private static final int beta = 2;
     private static final int w = 10000;
@@ -46,9 +46,11 @@ public class PMPMarlModel extends AbstractModel {
     public void run() {
         this.run(1);
     }
-    public void adjustHypers(){
+
+    public void adjustHypers() {
 
     }
+
     public void run(int epi) {
         super.run(epi);
 
@@ -163,82 +165,35 @@ public class PMPMarlModel extends AbstractModel {
 
                     }
                 }
-                updateGlobalReward(state, lastStateTransition);// line 32
-                updateGlobalProfit(state, lastStateTransition);// line 33
-                String transition = lastStateTransition;
-                // update Q value for last state transition
-                Map<String, Double> Q = state.getQTable();
-                /*
-                 * for (int j = 0; j < state.stateTransitions.size(); j++) {
-                 * String transition = state.stateTransitions.get(j);
-                 * //System.out.println("transitionm "+transition);
-                 * double newQvalue = (1 - alpha) * Q.get(transition) + alpha
-                 * (state.stateTransitionReward.get(transition)
-                 * + gamma * state.maxQNextTransition.get(transition));
-                 * //System.out.println("got new q value");
-                 * Q.put(transition, newQvalue);
-                 * }
-                 */
-                double newQvalue = (1 - alpha) * Q.get(transition) + alpha
-                        * (state.stateTransitionProfit.get(transition)
-                                + gamma * state.maxQNextTransition.get(transition));
-                // System.out.println("got new q value");
-                Q.put(transition, newQvalue);// line 34.
+                for (int j = 0; j < state.stateTransitions.size(); j++) {
+                    String transition = state.stateTransitions.get(j); // (s,t)
+                    double totalReward = 0.0;// r(s,t)
+                    double totalCost = 0.0; // c(s,t)
+                    double stateTransitProfit; // p(s,t)
+                    Map<String, Double> Q = state.getQTable();
+                    for (int c = 0; c < state.getAgents().size(); c++) {
+                        Agent agent = state.getAgents().get(c);
+                        if (j + 1 < agent.getRoute().size()) {
+                            SensorNode currNode = agent.getRoute().get(j);
+                            SensorNode nextNode = agent.getRoute().get(j + 1);
+                            // if j+1 is less than the route size then node changed in state transition
+                            // first transition is route.j to route j+1
+                            totalReward += state.edgeReward.get(currNode).get(nextNode);
+                            totalCost += currNode.calculateTransmissionCost(nextNode);
+                            totalCost += nextNode.calculateReceivingCost();
+                        }
+                    }
+                    state.stateTransitionReward.put(transition, totalReward); // line 32
+                    stateTransitProfit = totalReward - totalCost;
+                    state.stateTransitionProfit.put(transition, stateTransitProfit);// line 33.
+                    double newQValue = (1 - alpha) * Q.get(transition)
+                            + alpha * (state.stateTransitionProfit.get(transition)
+                                    + gamma * state.maxQNextTransition.get(transition));
+                    Q.put(transition, newQValue); // line 34.
+                }
+                
             }
-            // update state transition reward value
-            // for the LAST state transition, update transition reward
-            //
-            // commented out code below is for updating EVERY state transition in the
-            // episode
-            /*
-             * for (int j = 0; j < state.stateTransitions.size(); j++) {
-             * String transition = state.stateTransitions.get(j);
-             * 
-             * double totalReward = 0.0;
-             * for (int c = 0; c < state.getAgents().size(); c++) {
-             * Agent agent = state.getAgents().get(c);
-             * if (j + 1 < agent.getRoute().size()) {// if j+1 is less than the route size,
-             * then node changed in
-             * // state transition
-             * // first transition is route.j to route j+1
-             * //System.out.println(agent.getRoute().get(j)+" j: " +j);
-             * //System.out.println(agent.getRoute().get(j+1) +" j +1: "+ (j+1));
-             * totalReward +=
-             * state.edgeReward.get(agent.getRoute().get(j)).get(agent.getRoute().get(j +
-             * 1));
-             * } else {// else node didnt change in state transition
-             * 
-             * }
-             * // int index = Math.min(j,agent.getRoute().size()-1);
-             * 
-             * }
-             * state.stateTransitionReward.put(transition, totalReward);
-             * }
-             */
-
-            // double totalReward = 0.0;
-            // for (Agent agent : state.getAgents()) {
-            /*
-             * if (j + 1 < agent.getRoute().size()) {// if j+1 is less than the route size,
-             * then node changed in
-             * // state transition
-             * // first transition is route.j to route j+1
-             * //System.out.println(agent.getRoute().get(j)+" j: " +j);
-             * //System.out.println(agent.getRoute().get(j+1) +" j +1: "+ (j+1));
-             * totalReward +=
-             * state.edgeReward.get(agent.getRoute().get(j)).get(agent.getRoute().get(j +
-             * 1));
-             * } else {// else node didnt change in state transition
-             * 
-             * }
-             */
-            // int index = Math.min(j,agent.getRoute().size()-1);
-            // totalReward +=
-            // state.edgeReward.get(agent.getRoute().get(agent.getRoute().size() -
-            // 2)).get(agent.getRoute().get(agent.getRoute().size() - 1));
-
-            // }
-            // state.stateTransitionReward.put(transition, totalReward);
+            
 
             // reset for new episode
         } // end of each episode in learning stage
@@ -249,10 +204,11 @@ public class PMPMarlModel extends AbstractModel {
         state.resetForEpisode();
         // execution stage
         // int count = 0;
+        System.out.println("MARL execution stage has started...");
         while (!state.allAgentsAtStorage()) {
             // System.out.println("inf loop");
             // count++;
-
+            
             /*
              * if(count>60){
              * System.exit(0);
@@ -498,7 +454,7 @@ public class PMPMarlModel extends AbstractModel {
             double weight = 0.0;
             for (int j = 0; j < state.getAgents().size(); j++) {
                 Agent agent = state.getAgents().get(j);
-                
+
                 // transmissionCost
                 weight += agent.getCurrentLocation().calculateTransmissionCost(jointAction.get(j));
                 // receivingCost
@@ -521,7 +477,7 @@ public class PMPMarlModel extends AbstractModel {
                 }
                 sum += state.edgeReward.get(agent.getCurrentLocation()).get(jointAction.get(j));
             }
-            sum=sum/weight;
+            sum = sum / weight;
             state.getQTable().put(sStateTState, sum);
             // state.getQTable().put(sStateTState, 0.0);
         }
@@ -562,7 +518,7 @@ public class PMPMarlModel extends AbstractModel {
             }
             // next state has been found using transition rule
             // System.out.println(bestStateTransition);
-            //compareBestWith(state,bestJointAction,bestStateTransition);
+            // compareBestWith(state,bestJointAction,bestStateTransition);
             updatePacketCount(state, bestJointAction);
             // System.out.println("print beststate "+bestStateTransition);
             state.addStateTransition(bestStateTransition);
@@ -618,23 +574,25 @@ public class PMPMarlModel extends AbstractModel {
         testAction.add(this.getNetwork().getTransitionNodes().get(3));
         String nextState = encodeStateList(bestJointAction);
         String sStateTState = state.encodeST(nextState);
-        //updateQTable(state, jointAction);
+        // updateQTable(state, jointAction);
         ProbabilityResult pr = getProbabilityResult(state, sStateTState, bestJointAction);
         // System.out.println("max calc: "+(numerator/denominator));
-        /*if (pr.numerator() / pr.denominator() > max) {
-            // System.out.println("greater than max reached");
-            max = pr.numerator() / pr.denominator();
-            bestJointAction = jointAction;
-            bestStateTransition = sStateTState;
-        }*/
-        System.out.println("Argmax value for 'best' joint action is: "+ pr.numerator() / pr.denominator());
-        System.out.println("numerator: "+pr.numerator()+", denominator: "+ pr.denominator());
+        /*
+         * if (pr.numerator() / pr.denominator() > max) {
+         * // System.out.println("greater than max reached");
+         * max = pr.numerator() / pr.denominator();
+         * bestJointAction = jointAction;
+         * bestStateTransition = sStateTState;
+         * }
+         */
+        System.out.println("Argmax value for 'best' joint action is: " + pr.numerator() / pr.denominator());
+        System.out.println("numerator: " + pr.numerator() + ", denominator: " + pr.denominator());
         nextState = encodeStateList(testAction);
         sStateTState = state.encodeST(nextState);
         pr = getProbabilityResult(state, sStateTState, testAction);
 
-        System.out.println("Argmax value for what i thought would be better is: "+ pr.numerator() / pr.denominator());
-        System.out.println("numerator: "+pr.numerator()+", denominator: "+ pr.denominator());
+        System.out.println("Argmax value for what i thought would be better is: " + pr.numerator() / pr.denominator());
+        System.out.println("numerator: " + pr.numerator() + ", denominator: " + pr.denominator());
     }
 
     private static ProbabilityResult getProbabilityResult(NetState state, String sStateTState,
