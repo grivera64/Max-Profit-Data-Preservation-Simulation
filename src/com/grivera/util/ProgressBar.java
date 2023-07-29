@@ -85,7 +85,7 @@ public class ProgressBar {
         if (this.isDone()) {
             System.out.println(" => Done. \t");
         } else {
-            for (int i = 0; i < 15; i++) {
+            for (int i = 0; i < this.width / 4 + this.title.length(); i++) {
                 System.out.print(" ");
             }
             System.out.print("\r");
