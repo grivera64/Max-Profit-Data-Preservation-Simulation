@@ -12,13 +12,20 @@ import com.grivera.util.ProgressBar;
 import com.grivera.generator.sensors.SensorNode;
 
 public class PMPMarlModel extends AbstractModel {
-    private double alpha = .1;
-    private double gamma = .5;
-    private double epsilon = .2;
+    private double alpha;
+    private double alphaStart = .1;
+    private double alphaEnd = .1;
+    private double gamma;
+    private double gammaStart = .1;
+    private double gammaEnd = .1;
+    private double epsilon;
+    private double epsilonStart = .2;
+    private double epsilonEnd = .2;
+    private int episodes;
     private static final int delta = 1;
     private static final int beta = 2;
     private static final int w = 10000;
-    private static final double storageReward = 100;
+    private static final double storageReward = 1000;
     private static final double nonStorageReward = 1;
     private int storageCapacity;
     private int totalCost;
@@ -49,13 +56,33 @@ public class PMPMarlModel extends AbstractModel {
         this.run(1);
     }
 
-    public void adjustHypers() {
+    public void adjustHypers(int currEp) {
+        epsilon = linearValueCalc(currEp, epsilonStart, epsilonEnd);
+        alpha = linearValueCalc(currEp, alphaStart, alphaEnd);
+        gamma = linearValueCalc(currEp, gammaStart, gammaEnd);
+    }
 
+    public double linearValueCalc(int currEp, double start, double end) {
+        double valueRange;
+        if (start <= end) {
+            valueRange = end - start;
+        } else {
+            valueRange = start - end;
+        }
+        double valuePerEpisode = valueRange / episodes;
+        double currentVal = 0.0;
+
+        if (start <= end) {
+            currentVal = start + (valuePerEpisode * currEp);
+        } else {
+            currentVal = start - (valuePerEpisode * currEp);
+        }
+        return currentVal;
     }
 
     public void run(int epi) {
         super.run(epi);
-
+        episodes = epi;
         Network network = this.getNetwork();
 
         int cost, reward, profit;
@@ -70,6 +97,7 @@ public class PMPMarlModel extends AbstractModel {
         String lastStateTransition = "";
         for (int i = 0; i < epi; i++) {// learning Stage //line 1
             bar.step();
+            adjustHypers(i);
             // System.out.println("reset");
             state.resetForEpisode();// handles resetting for lines 3. to 8.
 
@@ -195,9 +223,8 @@ public class PMPMarlModel extends AbstractModel {
                                     + gamma * state.maxQNextTransition.get(transition));
                     Q.put(transition, newQValue); // line 34.
                 }
-                
+
             }
-            
 
             // reset for new episode
         } // end of each episode in learning stage
@@ -212,7 +239,7 @@ public class PMPMarlModel extends AbstractModel {
         while (!state.allAgentsAtStorage()) {
             // System.out.println("inf loop");
             // count++;
-            
+
             /*
              * if(count>60){
              * System.exit(0);
@@ -667,7 +694,8 @@ public class PMPMarlModel extends AbstractModel {
                 continue;
             }
             neighbors = ((SensorNetwork) this.getNetwork()).getNeighbors(agent.getCurrentLocation());
-            possibleHops = neighbors.stream().filter(node -> !agent.getRoute().contains(node)).collect(Collectors.toList());
+            possibleHops = neighbors.stream().filter(node -> !agent.getRoute().contains(node))
+                    .collect(Collectors.toList());
 
             // If dead-end, then retrace steps
             if (possibleHops.size() < 1) {
