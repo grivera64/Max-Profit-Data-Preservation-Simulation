@@ -32,6 +32,7 @@ public class SensorNetwork implements Network {
     private int dataPacketCount;
     private int storageCapacity;
     private final double transmissionRange;
+    private int batteryCapacity;
 
     /**
      * Constructor to create a Sensor Network
@@ -44,15 +45,17 @@ public class SensorNetwork implements Network {
      * @param q  the number of data packets each Data Node has
      * @param s  the number of Storage Nodes in the network
      * @param m  the storage capacity each Storage nodes has
+     * @param c  the battery capacity of each Sensor node (in micro Joules)
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int s, int m, int c, int Vl, int Vh) {
         this.width = x;
         this.length = y;
         this.dataPacketCount = q;
         this.storageCapacity = m;
         this.transmissionRange = tr;
+        this.batteryCapacity = c;
 
         /* Used to separate each type of node for later use and retrieval */
         if (p + s > N) throw new IllegalArgumentException("Invalid SensorNetwork constructor parameters");
@@ -113,8 +116,15 @@ public class SensorNetwork implements Network {
             fileScanner.nextLine();
             lineNumber++;
 
-            int N = fileScanner.nextInt();
-            fileScanner.nextLine();
+            /* TODO(grivera64@) For compatibility with non-battery capacity files (Remove later) */
+            String[] tokens = fileScanner.nextLine().split(" ");
+            int N = Integer.parseInt(tokens[0]);
+            if (tokens.length > 1) {
+                this.batteryCapacity = Integer.parseInt(tokens[1]); // Read if available
+            } else {
+                this.batteryCapacity = Integer.MAX_VALUE;           // Assume energy is a really large number
+            }
+            // fileScanner.nextLine();
             lineNumber++;
 
             SensorNode.resetCounter();
@@ -139,15 +149,15 @@ public class SensorNetwork implements Network {
                 x = Double.parseDouble(lineArgs[1]);
                 y = Double.parseDouble(lineArgs[2]);
 
-
                 // Requires JDK 12+
                 node = switch (lineArgs[0]) {
+                    /* TODO(grivera64@) For compatibility with non-battery capacity files (Remove ternary operation later) */
                     case "d" ->
-                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
+                            new DataNode(x, y, this.transmissionRange, this.batteryCapacity, this.dataPacketCount, (lineArgs.length > 3) ? Integer.parseInt(lineArgs[3]): (int) (Math.random() * 100) + 1);
                     case "s" ->
-                            new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
+                            new StorageNode(x, y, this.transmissionRange, this.batteryCapacity, this.storageCapacity);
                     case "t" ->
-                            new TransitionNode(x, y, this.transmissionRange);
+                            new TransitionNode(x, y, this.transmissionRange, this.batteryCapacity);
                     default ->
                             throw new IOException();
                 };
@@ -179,14 +189,15 @@ public class SensorNetwork implements Network {
      * @param q  the number of data packets each Data Node has
      * @param s  the number of Storage Nodes in the network
      * @param m  the storage capacity each Storage nodes has
+     * @param c  the battery capacity of each Sensor node (in micro Joules)
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int c, int Vl, int Vh) {
         SensorNetwork network;
         int attempts = 0;
         do {
-            network = new SensorNetwork(x, y, N, tr, p, q, s, m, Vl, Vh);
+            network = new SensorNetwork(x, y, N, tr, p, q, s, m, c, Vl, Vh);
 
             /* Checks if the parameters in the program are feasible */
             if (!network.isFeasible()) {
@@ -292,15 +303,15 @@ public class SensorNetwork implements Network {
             tmpVal = rand.nextInt(Vh - Vl + 1) + Vl;
 
             if ((choice < 4 && p > 0) || nodeCount - index <= p) {
-                tmp = new DataNode(x, y, this.transmissionRange, this.dataPacketCount, tmpVal);
+                tmp = new DataNode(x, y, this.transmissionRange, this.batteryCapacity, this.dataPacketCount, tmpVal);
                 this.dNodes.add((DataNode) tmp);
                 p--;
             } else if ((choice < 8 && s > 0) || nodeCount - index - p - s <= 0) {
-                tmp = new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
+                tmp = new StorageNode(x, y, this.transmissionRange, this.batteryCapacity, this.storageCapacity);
                 this.sNodes.add((StorageNode) tmp);
                 s--;
             } else {
-                tmp = new TransitionNode(x, y, this.transmissionRange);
+                tmp = new TransitionNode(x, y, this.transmissionRange, this.batteryCapacity);
                 this.tNodes.add((TransitionNode) tmp);
             }
             nodes.add(tmp);
@@ -347,8 +358,18 @@ public class SensorNetwork implements Network {
     }
 
     @Override
+    public int getSensorNodeCount() {
+        return this.nodes.size();
+    }
+
+    @Override
     public List<DataNode> getDataNodes() {
         return Collections.unmodifiableList(this.dNodes);
+    }
+
+    @Override
+    public int getDataNodeCount() {
+        return this.dNodes.size();
     }
 
     @Override
@@ -357,8 +378,18 @@ public class SensorNetwork implements Network {
     }
 
     @Override
+    public int getStorageNodeCount() {
+        return this.sNodes.size();
+    }
+
+    @Override
     public List<TransitionNode> getTransitionNodes() {
         return Collections.unmodifiableList(this.tNodes);
+    }
+
+    @Override
+    public int getTransitionNodeCount() {
+        return this.tNodes.size();
     }
 
     /**
@@ -461,11 +492,11 @@ public class SensorNetwork implements Network {
         return seen.size() == nodes.size();
     }
 
-    private Set<SensorNode> getNeighbors(SensorNode node) {
+    public Set<SensorNode> getNeighbors(SensorNode node) {
         return this.graph.getOrDefault(node, Set.of());
     }
 
-    private boolean isConnected(SensorNode sensorNode1, SensorNode sensorNode2) {
+    public boolean isConnected(SensorNode sensorNode1, SensorNode sensorNode2) {
         return this.getNeighbors(sensorNode1).contains(sensorNode2);
     }
 
@@ -635,5 +666,29 @@ public class SensorNetwork implements Network {
 
     public SensorNode getSensorNodeByUuid(int uuid) {
         return this.nodes.get(uuid - 1);
+    }
+
+    @Override
+    public DataNode getDataNodeById(int id) {
+        if (id < 1 || id > this.getDataNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid DN ID %d", id));
+        }
+        return this.dNodes.get(id - 1);
+    }
+
+    @Override
+    public StorageNode getStorageNodeById(int id) {
+        if (id < 1 || id > this.getStorageNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid SN ID %d", id));
+        }
+        return this.sNodes.get(id - 1);
+    }
+
+    @Override
+    public TransitionNode getTransitionNodeById(int id) {
+        if (id < 1 || id > this.getTransitionNodeCount()) {
+            throw new IndexOutOfBoundsException(String.format("Invalid TN ID %d", id));
+        }
+        return this.tNodes.get(id - 1);
     }
 }

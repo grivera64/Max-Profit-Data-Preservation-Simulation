@@ -1,4 +1,6 @@
-import com.grivera.solver.Cs2Model;
+import com.grivera.solver.PMPCs2Model;
+import com.grivera.solver.ILPModel;
+import com.grivera.solver.ILPWeightedModel;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
@@ -54,20 +56,46 @@ public class RunModelTests {
         System.out.println("Greedy:");
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+        System.out.println("Route:");
+        model.printRoute();
         System.out.println();
 
         try {
             System.out.println("CS2 (Optimal):");
-            model = new Cs2Model(network, cs2Location);
+            model = new PMPCs2Model(network, cs2Location);
             model.run();
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+            System.out.println("Route:");
+            model.printRoute();
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
         } finally {
             System.out.println();
         }
+
+        model = new ILPModel(network);
+        model.run();
+        System.out.println("ILP:");
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+        System.out.println("Route:");
+        model.printRoute();
+        System.out.println();
+
+        model = new ILPWeightedModel(network);
+        model.run();
+        System.out.println("ILP (Weighted):");
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+        System.out.println("Route:");
+        model.printRoute();
+        System.out.println();
     }
 
     public static Network readNetwork() {
@@ -117,6 +145,11 @@ public class RunModelTests {
         int storageCount = keyboard.nextInt();
         keyboard.nextLine();
 
+        System.out.println("Please enter the battery capacity (c) each Sensor Node has:");
+        System.out.print("c = ");
+        int batteryCapacity = keyboard.nextInt();
+        keyboard.nextLine();
+
         System.out.println("Please enter the min value (Vl) that any data packet can have:");
         System.out.print("Vl = ");
         int lowestValue = keyboard.nextInt();
@@ -129,7 +162,7 @@ public class RunModelTests {
 
         return SensorNetwork.of(
                 width, height, nodeCount, transmissionRange, gNodeCount, packetsCount, sNodeCount, storageCount,
-                lowestValue, highestValue
+                batteryCapacity, lowestValue, highestValue
         );
     }
 }

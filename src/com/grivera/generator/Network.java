@@ -16,9 +16,13 @@ public interface Network {
     double getWidth();
     double getLength();
     List<SensorNode> getSensorNodes();
+    int getSensorNodeCount();
     List<DataNode> getDataNodes();
+    int getDataNodeCount();
     List<StorageNode> getStorageNodes();
+    int getStorageNodeCount();
     List<TransitionNode> getTransitionNodes();
+    int getTransitionNodeCount();
 
     /**
      * Tests whether all the nodes are directly or indirectly connected with each
@@ -67,6 +71,8 @@ public interface Network {
      * @param fileName the path to the file to save to
      */
     void save(String fileName);
+    Set<SensorNode> getNeighbors(SensorNode node);
+    boolean isConnected(SensorNode sensorNode1, SensorNode sensorNode2);
 
     /**
      * Saves the network in the <b>DIMAC</b> format
@@ -83,4 +89,7 @@ public interface Network {
     void resetPackets();
     int calculateProfitOf(DataNode from, StorageNode to);
     SensorNode getSensorNodeByUuid(int uuid);
+    DataNode getDataNodeById(int id);
+    StorageNode getStorageNodeById(int id);
+    TransitionNode getTransitionNodeById(int id);
 }

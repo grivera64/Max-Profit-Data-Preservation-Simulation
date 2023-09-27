@@ -13,33 +13,33 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-public class Cs2Model extends AbstractModel {
+public class PMPCs2Model extends AbstractModel {
 
     private final String cs2Location;
     private int totalProfit;
     private List<Tuple<SensorNode, SensorNode, Integer>> flows;
 
-    public Cs2Model(Network network) {
+    public PMPCs2Model(Network network) {
         this(network, ".");
     }
-    public Cs2Model(Network network, String cs2Location) {
+    public PMPCs2Model(Network network, String cs2Location) {
         super(network);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public Cs2Model(String fileName) {
+    public PMPCs2Model(String fileName) {
         this(fileName, ".");
     }
 
     /* Note, this isn't thread safe */
-    public Cs2Model(String fileName, String cs2Location) {
+    public PMPCs2Model(String fileName, String cs2Location) {
         super(fileName);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public Cs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
+    public PMPCs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
         this.cs2Location = cs2Location;
         this.verifyCs2();
@@ -47,12 +47,17 @@ public class Cs2Model extends AbstractModel {
 
     private void verifyCs2() {
         File currDir = new File(this.cs2Location);
-        File[] files = currDir.listFiles(f -> f.getName().startsWith("cs2."));
+        File[] files = currDir.listFiles(f -> f.getName().matches("^cs2(.exe)?$"));
         if (files == null || files.length < 1) {
             throw new IllegalArgumentException(
                     String.format("Couldn't find CS2 program [Searched Dir: \"%s\"]", currDir.getAbsoluteFile())
             );
         }
+    }
+
+    public void run(int episodes) {
+        System.out.println("Warning: Ignoring episodes count; defaulting to 1...");
+        this.run();
     }
 
     public void run() {
@@ -113,6 +118,9 @@ public class Cs2Model extends AbstractModel {
 
         this.flows = new ArrayList<>();
         try (Scanner fileScanner = new Scanner(file)) {
+            if (!fileScanner.hasNext()) {
+                System.err.println("WARNING: EMPTY FILE!");
+            }
             while (fileScanner.hasNext()) {
                 lineSplit = fileScanner.nextLine().split("\\s+");
 
@@ -124,7 +132,7 @@ public class Cs2Model extends AbstractModel {
                         srcId = Integer.parseInt(lineSplit[1]);
                         dstId = Integer.parseInt(lineSplit[2]);
 
-                        if (srcId < 1 || dstId >= network.getSensorNodes().size()) {
+                        if (srcId < 1 || dstId > network.getDataNodeCount() + network.getStorageNodeCount()) {
                             break;
                         }
 
@@ -148,18 +156,50 @@ public class Cs2Model extends AbstractModel {
 
     @Override
     public int getTotalProfit() {
+        super.getTotalProfit();
         return this.totalProfit;
     }
 
     @Override
-    public int getTotalCost() {
-        int totalCost = 0;
+    public void printRoute() {
+        super.printRoute();
 
+        StringJoiner str;
+        Network network = this.getNetwork();
+        for (Tuple<SensorNode, SensorNode, Integer> tuple : this.flows) {
+            if (tuple.third() > 0) {
+                System.out.printf("%s -> %s (flow = %d)\n", tuple.first().getName(), tuple.second().getName(), tuple.third());
+
+                str = new StringJoiner(" -> ", "[", "]");
+                for (SensorNode n : network.getMinCostPath(tuple.first(), tuple.second())) {
+                    str.add(n.getName());
+                }
+                System.out.printf("\t%s\n", str);
+            }
+        }
+    }
+
+    @Override
+    public int getTotalCost() {
+        super.getTotalCost();
+
+        int totalCost = 0;
         Network network = this.getNetwork();
         for (Tuple<SensorNode, SensorNode, Integer> tuple : this.flows) {
             totalCost += network.calculateMinCost(tuple.first(), tuple.second()) * tuple.third();
         }
         return totalCost;
+    }
+
+    @Override
+    public int getTotalPackets() {
+        super.getTotalPackets();
+
+        int totalPackets = 0;
+        for (Tuple<SensorNode, SensorNode, Integer> tuple : this.flows) {
+            totalPackets += tuple.third();
+        }
+        return totalPackets;
     }
 
     private String getDateString() {

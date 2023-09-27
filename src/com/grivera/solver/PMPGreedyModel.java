@@ -2,10 +2,16 @@ package com.grivera.solver;
 
 import com.grivera.generator.Network;
 import com.grivera.generator.sensors.DataNode;
+import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
+import com.grivera.util.Pair;
+import com.grivera.util.Tuple;
+
+import java.util.*;
 
 public class PMPGreedyModel extends AbstractModel {
 
+    private final Map<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> routes = new HashMap<>();
     private int totalCost;
     private int totalProfit;
 
@@ -19,6 +25,11 @@ public class PMPGreedyModel extends AbstractModel {
 
     public PMPGreedyModel(String fileName, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
+    }
+
+    public void run(int episodes) {
+        System.out.println("Warning: Ignoring episodes count; defaulting to 1...");
+        this.run();
     }
 
     @Override
@@ -69,6 +80,9 @@ public class PMPGreedyModel extends AbstractModel {
 
                     this.totalCost += cost * packetsToSend;
                     this.totalProfit += chosenProfit * packetsToSend;
+
+                    routes.putIfAbsent(dn, new ArrayList<>());
+                    routes.get(dn).add(Tuple.of(chosenSn, packetsToSend, network.getMinCostPath(dn, chosenSn)));
                 /* Discard all packets */
                 } else {
 //                    System.out.printf("%s [%d] -> Dummy [%d] (%d packets discarded)\n",
@@ -91,5 +105,22 @@ public class PMPGreedyModel extends AbstractModel {
     public int getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
+    }
+
+    @Override
+    public void printRoute() {
+        StringJoiner str;
+
+        for (Map.Entry<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> entry : this.routes.entrySet()) {
+            for (Tuple<StorageNode, Integer, List<SensorNode>> route : entry.getValue()) {
+                str = new StringJoiner(" -> ", "[", "]");
+                System.out.printf("%s -> %s (flow = %d)\n", entry.getKey().getName(), route.first().getName(), route.second());
+                for (SensorNode node : route.third()) {
+                    str.add(node.getName());
+                }
+                System.out.printf("\t%s\n", str);
+            }
+        }
+
     }
 }
