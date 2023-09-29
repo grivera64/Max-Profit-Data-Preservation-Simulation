@@ -4,7 +4,6 @@ import com.grivera.generator.Network;
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
-import com.grivera.util.Pair;
 import com.grivera.util.Tuple;
 
 import java.util.*;

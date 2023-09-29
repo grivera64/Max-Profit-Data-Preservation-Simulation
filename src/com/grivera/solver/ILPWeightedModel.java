@@ -381,6 +381,8 @@ public class ILPWeightedModel extends AbstractModel {
                 flow = this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue();
                 if (flow > 1e-3) {
                     System.out.printf("%s -> %s (flow = %.0f)\n", dn.getName(), sn.getName(), flow);
+                    System.out.printf("\tCost: %f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
+                    System.out.printf("\tValue: %f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
                 }
             }
         }
