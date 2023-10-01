@@ -11,6 +11,7 @@ import java.util.*;
 public class PMPGreedyModel extends AbstractModel {
 
     private final Map<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> routes = new HashMap<>();
+    private int totalValue;
     private int totalCost;
     private int totalProfit;
 
@@ -34,6 +35,7 @@ public class PMPGreedyModel extends AbstractModel {
     @Override
     public void run() {
         super.run();
+        this.totalValue = 0;
         this.totalCost = 0;
         this.totalProfit = 0;
 
@@ -79,6 +81,7 @@ public class PMPGreedyModel extends AbstractModel {
 
                     this.totalCost += cost * packetsToSend;
                     this.totalProfit += chosenProfit * packetsToSend;
+                    this.totalValue += dn.getOverflowPacketValue() * packetsToSend;
 
                     routes.putIfAbsent(dn, new ArrayList<>());
                     routes.get(dn).add(Tuple.of(chosenSn, packetsToSend, network.getMinCostPath(dn, chosenSn)));
@@ -94,6 +97,13 @@ public class PMPGreedyModel extends AbstractModel {
     }
 
     @Override
+    public int getTotalValue() {
+        super.getTotalValue();
+
+        return this.totalValue;
+    }
+
+    @Override
     public int getTotalCost() {
         super.getTotalCost();
 
@@ -104,6 +114,17 @@ public class PMPGreedyModel extends AbstractModel {
     public int getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
+    }
+
+    @Override
+    public int getTotalPackets() {
+        super.getTotalPackets();
+
+        int totalPackets = 0;
+        for (StorageNode sn : this.getNetwork().getStorageNodes()) {
+            totalPackets += sn.getUsedSpace();
+        }
+        return totalPackets;
     }
 
     @Override

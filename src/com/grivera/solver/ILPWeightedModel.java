@@ -37,6 +37,12 @@ public class ILPWeightedModel extends AbstractModel {
     }
 
     @Override
+    public int getTotalValue() {
+        super.getTotalValue();
+        return (int) this.cachedObjective.value();
+    }
+
+    @Override
     public int getTotalCost() {
         super.getTotalCost();
 
@@ -47,7 +53,7 @@ public class ILPWeightedModel extends AbstractModel {
         int totalCost = 0;
         for (DataNode dn : dNodes) {
             for (StorageNode sn : sNodes) {
-                totalCost += this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn);
+                totalCost += (int) Math.round(this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue()) * network.calculateMinCost(dn, sn);
             }
         }
         return totalCost;
@@ -56,8 +62,7 @@ public class ILPWeightedModel extends AbstractModel {
     @Override
     public int getTotalProfit() {
         super.getTotalProfit();
-        int totalValue = (int) this.cachedObjective.value();
-        return totalValue - this.getTotalCost();
+        return this.getTotalValue() - this.getTotalCost();
     }
 
     @Override
@@ -70,7 +75,7 @@ public class ILPWeightedModel extends AbstractModel {
         int totalPackets = 0;
         final int sinkIndex = 2 * n + 1;
         for (StorageNode sn : dNodes) {
-            totalPackets += this.cachedX[sn.getUuid() + n][sinkIndex].solutionValue();
+            totalPackets += (int) Math.round(this.cachedX[sn.getUuid() + n][sinkIndex].solutionValue());
         }
         return totalPackets;
     }
@@ -381,8 +386,8 @@ public class ILPWeightedModel extends AbstractModel {
                 flow = this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue();
                 if (flow > 1e-3) {
                     System.out.printf("%s -> %s (flow = %.0f)\n", dn.getName(), sn.getName(), flow);
-                    System.out.printf("\tCost: %f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
-                    System.out.printf("\tValue: %f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
+                    // System.out.printf("\tCost: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
+                    // System.out.printf("\tValue: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
                 }
             }
         }

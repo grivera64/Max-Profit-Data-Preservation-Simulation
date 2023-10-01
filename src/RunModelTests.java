@@ -54,6 +54,7 @@ public class RunModelTests {
         Model model = new PMPGreedyModel(network);
         model.run();
         System.out.println("Greedy:");
+        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
@@ -65,6 +66,7 @@ public class RunModelTests {
             System.out.println("CS2 (Optimal):");
             model = new PMPCs2Model(network, cs2Location);
             model.run();
+            System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
@@ -80,6 +82,7 @@ public class RunModelTests {
         model = new ILPModel(network);
         model.run();
         System.out.println("ILP:");
+        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
@@ -90,6 +93,7 @@ public class RunModelTests {
         model = new ILPWeightedModel(network);
         model.run();
         System.out.println("ILP (Weighted):");
+        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Packets preserved: %d\n", model.getTotalPackets());

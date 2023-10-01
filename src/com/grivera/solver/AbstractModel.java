@@ -36,6 +36,14 @@ public abstract class AbstractModel implements Model {
     }
 
     @Override
+    public int getTotalValue() {
+        if (!this.hasRan) {
+            throw new IllegalArgumentException("Cannot get the total value before runing the model!");
+        }
+        return -1;
+    }
+
+    @Override
     public int getTotalCost() {
         if (!this.hasRan) {
             throw new IllegalStateException("Cannot get the total cost before running the model!");

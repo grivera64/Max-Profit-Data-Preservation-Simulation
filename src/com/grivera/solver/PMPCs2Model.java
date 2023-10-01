@@ -180,6 +180,18 @@ public class PMPCs2Model extends AbstractModel {
     }
 
     @Override
+    public int getTotalValue() {
+        super.getTotalValue();
+
+        int totalValue = 0;
+        Network network = this.getNetwork();
+        for (Tuple<SensorNode, SensorNode, Integer> tuple : this.flows){
+            totalValue += network.getDataNodeById(tuple.first().getId()).getOverflowPacketValue() * tuple.third();
+        }
+        return totalValue;
+    }
+
+    @Override
     public int getTotalCost() {
         super.getTotalCost();
 
