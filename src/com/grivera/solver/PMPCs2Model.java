@@ -70,7 +70,7 @@ public class PMPCs2Model extends AbstractModel {
         network.saveAsCsInp(tmpInpName);
 
         String cs2FullPath = new File(this.cs2Location).getAbsolutePath();
-        Path tmpTxt;
+        Path tmpTxt = null;
         String tmpTxtName;
         try {
             tmpTxt = Files.createTempFile(Path.of("."), baseFileName, ".txt");
@@ -98,6 +98,9 @@ public class PMPCs2Model extends AbstractModel {
             tmpTxt.toFile().delete();
         } catch (IOException | InterruptedException e) {
             System.err.printf("ERROR: Terminal not supported for '%s'!\n", System.getProperty("os.name"));
+        } catch (IllegalArgumentException e) {
+            System.err.printf("ERROR: Unable to parse CS2 Results: '%s'\n", e.getMessage());
+            tmpTxt.toFile().delete();
         }
         new File(tmpInpName).delete();
     }

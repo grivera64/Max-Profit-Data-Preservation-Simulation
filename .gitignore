@@ -1,7 +1,10 @@
 out/
+bin/
 .idea/
 *.txt
 *.exe
+*.log
+network.sn
 .vscode/
 cs2*
 .DS_STORE

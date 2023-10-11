@@ -4,6 +4,7 @@ import com.grivera.generator.Network;
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
+import com.grivera.util.Doubles;
 
 import java.util.List;
 
@@ -15,8 +16,8 @@ import com.google.ortools.linearsolver.MPSolver;
 import com.google.ortools.linearsolver.MPVariable;
 
 public class ILPWeightedModel extends AbstractModel {
-    private MPVariable[][] cachedX;
-    private MPObjective cachedObjective;
+    private int[][] cachedX;
+    private int cachedObjective;
 
     public ILPWeightedModel(Network network) {
         super(network);
@@ -39,7 +40,7 @@ public class ILPWeightedModel extends AbstractModel {
     @Override
     public int getTotalValue() {
         super.getTotalValue();
-        return (int) this.cachedObjective.value();
+        return this.cachedObjective;
     }
 
     @Override
@@ -47,13 +48,15 @@ public class ILPWeightedModel extends AbstractModel {
         super.getTotalCost();
 
         Network network = this.getNetwork();
-        List<DataNode> dNodes = network.getDataNodes();
-        List<StorageNode> sNodes = network.getStorageNodes();
-        final int n = dNodes.size() + sNodes.size();
+        List<SensorNode> nodes = network.getSensorNodes();
+        final int n = nodes.size();
         int totalCost = 0;
-        for (DataNode dn : dNodes) {
-            for (StorageNode sn : sNodes) {
-                totalCost += (int) Math.round(this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue()) * network.calculateMinCost(dn, sn);
+        for (SensorNode node1 : nodes) {
+            for (SensorNode node2 : nodes) {
+                if (node1.equals(node2)) {
+                    continue;
+                }
+                totalCost += this.cachedX[node1.getUuid() + n][node2.getUuid()] * network.calculateMinCost(node1, node2);
             }
         }
         return totalCost;
@@ -75,7 +78,7 @@ public class ILPWeightedModel extends AbstractModel {
         int totalPackets = 0;
         final int sinkIndex = 2 * n + 1;
         for (StorageNode sn : dNodes) {
-            totalPackets += (int) Math.round(this.cachedX[sn.getUuid() + n][sinkIndex].solutionValue());
+            totalPackets += this.cachedX[sn.getUuid() + n][sinkIndex];
         }
         return totalPackets;
     }
@@ -198,10 +201,21 @@ public class ILPWeightedModel extends AbstractModel {
 
         // solve
         final MPSolver.ResultStatus resultStatus = solver.solve();
+        switch (resultStatus) {
+        case OPTIMAL:
+            break;
+        default:
+            throw new IllegalStateException("The network is not ILP (Weighted) feasible!");
+        }
 
         // Cache the variables used
-        this.cachedX = x;
-        this.cachedObjective = objective;
+        this.cachedX = new int[x.length][x[x.length - 1].length];
+        for (int row = 0; row < this.cachedX.length; row++) {
+            for (int col = 0; col < this.cachedX[row].length; col++) {
+               this.cachedX[row][col] = (int) Doubles.floorRound(x[row][col].solutionValue());
+            }
+        }
+        this.cachedObjective = (int) objective.value();
     }
 
     private void makeMaxFlowEdges(MPVariable[][] x, MPSolver solver) {
@@ -380,12 +394,12 @@ public class ILPWeightedModel extends AbstractModel {
         List<StorageNode> sNodes = network.getStorageNodes();
         final int n = dNodes.size() + sNodes.size();
 
-        double flow;
+        int flow;
         for (DataNode dn : dNodes) {
             for (StorageNode sn : sNodes) {
-                flow = this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue();
-                if (flow > 1e-3) {
-                    System.out.printf("%s -> %s (flow = %.0f)\n", dn.getName(), sn.getName(), flow);
+                flow = this.cachedX[dn.getUuid() + n][sn.getUuid()];
+                if (flow > 0) {
+                    System.out.printf("%s -> %s (flow = %d)\n", dn.getName(), sn.getName(), flow);
                     // System.out.printf("\tCost: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
                     // System.out.printf("\tValue: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
                 }

@@ -54,10 +54,10 @@ public class RunModelTests {
         Model model = new PMPGreedyModel(network);
         model.run();
         System.out.println("Greedy:");
-        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+        System.out.printf("Value: %,d \u00b5J\n", model.getTotalValue());
+        System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
         System.out.println("Route:");
         model.printRoute();
         System.out.println();
@@ -66,10 +66,10 @@ public class RunModelTests {
             System.out.println("CS2 (Optimal):");
             model = new PMPCs2Model(network, cs2Location);
             model.run();
-            System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-            System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
+            System.out.printf("Value: %,d \u00b5J\n", model.getTotalValue());
+            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
             System.out.println("Route:");
             model.printRoute();
         } catch (IllegalArgumentException e) {
@@ -78,27 +78,35 @@ public class RunModelTests {
         } finally {
             System.out.println();
         }
-
-        model = new ILPModel(network);
-        model.run();
-        System.out.println("ILP:");
-        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
-        System.out.println("Route:");
-        model.printRoute();
+        
+        try {
+            System.out.println("ILP:");
+            model = new ILPModel(network);
+            model.run();
+            System.out.printf("Value: %,d \u00b5J\n", model.getTotalValue());
+            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
+            System.out.println("Route:");
+            model.printRoute();
+        } catch (IllegalStateException e) {
+            System.out.printf("ERROR: %s\n", e.getMessage());
+        }
         System.out.println();
 
-        model = new ILPWeightedModel(network);
-        model.run();
-        System.out.println("ILP (Weighted):");
-        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-        System.out.printf("Packets preserved: %d\n", model.getTotalPackets());
-        System.out.println("Route:");
-        model.printRoute();
+        try {
+             model = new ILPWeightedModel(network);
+            System.out.println("ILP (Weighted):");
+            model.run();
+            System.out.printf("Value: %,d \u00b5J\n", model.getTotalValue());
+            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
+            System.out.println("Route:");
+            model.printRoute();
+        } catch (IllegalStateException e) {
+            System.out.printf("ERROR: %s\n", e.getMessage());
+        }
         System.out.println();
     }
 

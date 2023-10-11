@@ -4,8 +4,16 @@ import com.grivera.generator.Network;
 import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
+import com.grivera.util.Doubles;
+import com.grivera.util.MathUtil;
+import com.grivera.util.Tuple;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 
 //imports for google OR-tools
 import com.google.ortools.Loader;
@@ -15,8 +23,8 @@ import com.google.ortools.linearsolver.MPSolver;
 import com.google.ortools.linearsolver.MPVariable;
 
 public class ILPModel extends AbstractModel {
-    private MPVariable[][] cachedX;
-    private MPObjective cachedObjective;
+    private int[][] cachedX;
+    private int cachedObjective;
 
     public ILPModel(Network network) {
         super(network);
@@ -40,11 +48,64 @@ public class ILPModel extends AbstractModel {
     public int getTotalValue() {
         super.getTotalValue();
 
-        final int sourceIndex = 0;
-        int totalValue = 0;
-        for (DataNode dn : this.getNetwork().getDataNodes()) {
-            totalValue += (int) Math.round(this.cachedX[sourceIndex][dn.getUuid()].solutionValue()) * dn.getOverflowPacketValue();
+        int[][] oldX = new int[this.cachedX.length][this.cachedX[this.cachedX.length - 1].length];
+        for (int row = 0; row < this.cachedX.length; row++) {
+            System.arraycopy(this.cachedX[row], 0, oldX[row], 0, this.cachedX[row].length);
         }
+
+        Network network = this.getNetwork();
+        final int n = network.getSensorNodeCount();
+        final int sourceIndex = 0;
+        final int sinkIndex = 2 * n + 1;
+        int totalValue = 0;
+        int flowEdge;
+        int packetEdge;
+        int storeEdge;
+        int sentPackets;
+        // Find for direct DN->SN pairs
+        for (DataNode dn : network.getDataNodes()) {
+            packetEdge = this.cachedX[sourceIndex][dn.getUuid()];
+            for (StorageNode sn : network.getStorageNodes()) {
+                flowEdge = this.cachedX[dn.getUuid() + n][sn.getUuid()];
+                storeEdge = this.cachedX[sn.getUuid() + n][sinkIndex];
+                sentPackets = (int) MathUtil.min(packetEdge, flowEdge, storeEdge);
+
+                totalValue += sentPackets * dn.getOverflowPacketValue();
+                this.cachedX[dn.getUuid() + n][sn.getUuid()] -= sentPackets;
+            }
+        }
+
+        Queue<Tuple<SensorNode, Integer, Integer>> q = new LinkedList<>();
+        for (DataNode dn : network.getDataNodes()) {
+            q.offer(Tuple.of(dn, this.cachedX[sourceIndex][dn.getUuid()], dn.getOverflowPacketValue()));
+        }
+        Tuple<SensorNode, Integer, Integer> currTuple;
+        Set<SensorNode> neighbors;
+        Map<SensorNode, SensorNode> backtracker = new HashMap<>();
+        int newFlow;
+        while (!q.isEmpty()) {
+            currTuple = q.poll();
+            if (this.cachedX[currTuple.first().getUuid() + n][sinkIndex] > 0) {
+                totalValue += currTuple.second() * currTuple.third();
+                continue;
+            }
+
+            neighbors = network.getNeighbors(currTuple.first());
+            for (SensorNode neighbor : neighbors) {
+                if (backtracker.containsKey(neighbor) && backtracker.get(neighbor).equals(currTuple.first())) {
+                    continue;
+                }
+                if (this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()] <= 0) {
+                    continue;
+                }
+                newFlow = (int) MathUtil.min(this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()], currTuple.second());
+                q.offer(Tuple.of(neighbor, newFlow, currTuple.third()));
+                backtracker.put(currTuple.first(), neighbor);
+                this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()] -= newFlow;
+            }
+        }
+
+        this.cachedX = oldX;
         return totalValue;
     }
 
@@ -53,13 +114,15 @@ public class ILPModel extends AbstractModel {
         super.getTotalCost();
 
         Network network = this.getNetwork();
-        List<DataNode> dNodes = network.getDataNodes();
-        List<StorageNode> sNodes = network.getStorageNodes();
-        final int n = dNodes.size() + sNodes.size();
+        List<SensorNode> nodes = network.getSensorNodes();
+        final int n = nodes.size();
         int totalCost = 0;
-        for (DataNode dn : dNodes) {
-            for (StorageNode sn : sNodes) {
-                totalCost += (int) Math.round(this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue()) * network.calculateMinCost(dn, sn);
+        for (SensorNode node1 : nodes) {
+            for (SensorNode node2 : nodes) {
+                if (node1.equals(node2)) {
+                    continue;
+                }
+                totalCost += this.cachedX[node1.getUuid() + n][node2.getUuid()] * network.calculateMinCost(node1, node2);
             }
         }
         return totalCost;
@@ -74,7 +137,7 @@ public class ILPModel extends AbstractModel {
     @Override
     public int getTotalPackets() {
         super.getTotalPackets();
-        return (int) this.cachedObjective.value();
+        return this.cachedObjective;
     }
 
     /* TODO(grivera64@) Verify! */
@@ -195,10 +258,21 @@ public class ILPModel extends AbstractModel {
 
         // solve
         final MPSolver.ResultStatus resultStatus = solver.solve();
+        switch (resultStatus) {
+        case OPTIMAL:
+            break;
+        default:
+            throw new IllegalStateException("The network is not ILP (Weighted) feasible!");
+        }
 
         // Cache the variables used
-        this.cachedX = x;
-        this.cachedObjective = objective;
+        this.cachedX = new int[x.length][x[x.length - 1].length];
+        for (int row = 0; row < this.cachedX.length; row++) {
+            for (int col = 0; col < this.cachedX[row].length; col++) {
+               this.cachedX[row][col] = (int) Doubles.floorRound(x[row][col].solutionValue());
+            }
+        }
+        this.cachedObjective = (int) objective.value();
     }
 
     private void makeMaxFlowEdges(MPVariable[][] x, MPSolver solver) {
@@ -377,12 +451,12 @@ public class ILPModel extends AbstractModel {
         List<StorageNode> sNodes = network.getStorageNodes();
         final int n = dNodes.size() + sNodes.size();
 
-        double flow;
+        int flow;
         for (DataNode dn : dNodes) {
             for (StorageNode sn : sNodes) {
-                flow = this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue();
-                if (flow > 1e-3) {
-                    System.out.printf("%s -> %s (flow = %.0f)\n", dn.getName(), sn.getName(), flow);
+                flow = this.cachedX[dn.getUuid() + n][sn.getUuid()];
+                if (flow > 0) {
+                    System.out.printf("%s -> %s (flow = %d)\n", dn.getName(), sn.getName(), flow);
                     // System.out.printf("\tCost: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
                     // System.out.printf("\tValue: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
                 }
