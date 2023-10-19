@@ -47,8 +47,8 @@ public class ILPWeightedModel extends AbstractModel {
     public int getTotalCost() {
         super.getTotalCost();
 
-        Network network = this.getNetwork();
-        List<SensorNode> nodes = network.getSensorNodes();
+        final Network network = this.getNetwork();
+        final List<SensorNode> nodes = network.getSensorNodes();
         final int n = nodes.size();
         int totalCost = 0;
         for (SensorNode node1 : nodes) {

@@ -4,7 +4,7 @@ bin/
 *.txt
 *.exe
 *.log
-network.sn
+*.sn
 .vscode/
 cs2*
 .DS_STORE

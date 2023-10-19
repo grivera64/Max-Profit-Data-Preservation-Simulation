@@ -84,6 +84,7 @@ public interface Network {
     void saveAsCsInp(String fileName);
     void setOverflowPackets(int overflowPackets);
     void setStorageCapacity(int storageCapacity);
+    void setBatteryCapacity(int batteryCapacity);
     boolean canSendPackets(DataNode dn, StorageNode sn, int packets);
     void sendPackets(DataNode dn, StorageNode sn, int packets);
     void resetPackets();

@@ -116,15 +116,9 @@ public class SensorNetwork implements Network {
             fileScanner.nextLine();
             lineNumber++;
 
-            /* TODO(grivera64@) For compatibility with non-battery capacity files (Remove later) */
             String[] tokens = fileScanner.nextLine().split(" ");
             int N = Integer.parseInt(tokens[0]);
-            if (tokens.length > 1) {
-                this.batteryCapacity = Integer.parseInt(tokens[1]); // Read if available
-            } else {
-                this.batteryCapacity = Integer.MAX_VALUE;           // Assume energy is a really large number
-            }
-            // fileScanner.nextLine();
+            this.batteryCapacity = Integer.parseInt(tokens[1]);
             lineNumber++;
 
             SensorNode.resetCounter();
@@ -151,9 +145,8 @@ public class SensorNetwork implements Network {
 
                 // Requires JDK 12+
                 node = switch (lineArgs[0]) {
-                    /* TODO(grivera64@) For compatibility with non-battery capacity files (Remove ternary operation later) */
                     case "d" ->
-                            new DataNode(x, y, this.transmissionRange, this.batteryCapacity, this.dataPacketCount, (lineArgs.length > 3) ? Integer.parseInt(lineArgs[3]): (int) (Math.random() * 100) + 1);
+                            new DataNode(x, y, this.transmissionRange, this.batteryCapacity, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
                     case "s" ->
                             new StorageNode(x, y, this.transmissionRange, this.batteryCapacity, this.storageCapacity);
                     case "t" ->
@@ -456,7 +449,7 @@ public class SensorNetwork implements Network {
         try (PrintWriter pw = new PrintWriter(file)) {
             pw.printf("%f %f %f\n", this.getWidth(), this.getLength(), this.transmissionRange); // X, Y, Tr
             pw.printf("%d %d\n", this.dataPacketCount, this.storageCapacity); // q m
-            pw.printf("%d\n", this.nodes.size()); // N
+            pw.printf("%d %d\n", this.nodes.size(), this.batteryCapacity); // N c
 
             for (SensorNode n : this.nodes) {
                 if (n instanceof DataNode dn) {         // JDK 15+ feature
@@ -626,6 +619,13 @@ public class SensorNetwork implements Network {
 
         for (StorageNode sn : this.sNodes) {
             sn.setCapacity(storageCapacity);
+        }
+    }
+
+    public void setBatteryCapacity(int batteryCapacity) {
+        this.batteryCapacity = batteryCapacity;
+        for (SensorNode sn : this.nodes) {
+            sn.setBatteryCapacity(batteryCapacity);
         }
     }
 

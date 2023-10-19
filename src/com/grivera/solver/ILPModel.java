@@ -8,10 +8,10 @@ import com.grivera.util.Doubles;
 import com.grivera.util.MathUtil;
 import com.grivera.util.Tuple;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 
@@ -53,17 +53,19 @@ public class ILPModel extends AbstractModel {
             System.arraycopy(this.cachedX[row], 0, oldX[row], 0, this.cachedX[row].length);
         }
 
-        Network network = this.getNetwork();
+        final Network network = this.getNetwork();
+        final List<DataNode> dns = network.getDataNodes();
         final int n = network.getSensorNodeCount();
         final int sourceIndex = 0;
         final int sinkIndex = 2 * n + 1;
+
         int totalValue = 0;
         int flowEdge;
         int packetEdge;
         int storeEdge;
         int sentPackets;
         // Find for direct DN->SN pairs
-        for (DataNode dn : network.getDataNodes()) {
+        for (DataNode dn : dns) {
             packetEdge = this.cachedX[sourceIndex][dn.getUuid()];
             for (StorageNode sn : network.getStorageNodes()) {
                 flowEdge = this.cachedX[dn.getUuid() + n][sn.getUuid()];
@@ -71,36 +73,46 @@ public class ILPModel extends AbstractModel {
                 sentPackets = (int) MathUtil.min(packetEdge, flowEdge, storeEdge);
 
                 totalValue += sentPackets * dn.getOverflowPacketValue();
+
+                this.cachedX[sourceIndex][dn.getUuid()] -= sentPackets;
                 this.cachedX[dn.getUuid() + n][sn.getUuid()] -= sentPackets;
+                this.cachedX[sn.getUuid() + n][sinkIndex] -= sentPackets;
             }
         }
 
-        Queue<Tuple<SensorNode, Integer, Integer>> q = new LinkedList<>();
-        for (DataNode dn : network.getDataNodes()) {
+        // Sort queue by smallest packets to send first
+        // TODO(grivera64@): Verify if this will result in the most accurate as possible (while being smaller than CS2)
+        // Queue<Tuple<SensorNode, Integer, Integer>> q = new PriorityQueue<>((t1, t2) -> Integer.compare(t2.second(), t1.second()));
+        Queue<Tuple<SensorNode, Integer, Integer>> q = new PriorityQueue<>((t1, t2) -> {
+            return -Integer.compare(t1.second(), t2.second());
+        });
+        // Queue<Tuple<SensorNode, Integer, Integer>> q = new ArrayDeque<>();
+        for (DataNode dn : dns) {
             q.offer(Tuple.of(dn, this.cachedX[sourceIndex][dn.getUuid()], dn.getOverflowPacketValue()));
+            this.cachedX[sourceIndex][dn.getUuid()] = 0;
         }
         Tuple<SensorNode, Integer, Integer> currTuple;
         Set<SensorNode> neighbors;
-        Map<SensorNode, SensorNode> backtracker = new HashMap<>();
         int newFlow;
         while (!q.isEmpty()) {
             currTuple = q.poll();
-            if (this.cachedX[currTuple.first().getUuid() + n][sinkIndex] > 0) {
-                totalValue += currTuple.second() * currTuple.third();
-                continue;
+            storeEdge = this.cachedX[currTuple.first().getUuid() + n][sinkIndex];
+            if (storeEdge > 0) {
+                sentPackets = (int) MathUtil.min(storeEdge, currTuple.second());
+                totalValue += sentPackets * currTuple.third();
+                this.cachedX[currTuple.first().getUuid() + n][sinkIndex] -= sentPackets;
             }
 
             neighbors = network.getNeighbors(currTuple.first());
             for (SensorNode neighbor : neighbors) {
-                if (backtracker.containsKey(neighbor) && backtracker.get(neighbor).equals(currTuple.first())) {
-                    continue;
-                }
                 if (this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()] <= 0) {
                     continue;
                 }
-                newFlow = (int) MathUtil.min(this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()], currTuple.second());
+                flowEdge = this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()];
+                packetEdge = currTuple.second();
+                
+                newFlow = (int) MathUtil.min(flowEdge, packetEdge);
                 q.offer(Tuple.of(neighbor, newFlow, currTuple.third()));
-                backtracker.put(currTuple.first(), neighbor);
                 this.cachedX[currTuple.first().getUuid() + n][neighbor.getUuid()] -= newFlow;
             }
         }
