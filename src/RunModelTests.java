@@ -61,8 +61,8 @@ public class RunModelTests {
         System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-        // System.out.println("Route:");
-        // model.printRoute();
+        System.out.println("Route:");
+        model.printRoute();
         System.out.println();
 
         try {
@@ -73,8 +73,8 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            // System.out.println("Route:");
-            // model.printRoute();
+            System.out.println("Route:");
+            model.printRoute();
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
@@ -90,8 +90,8 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            // System.out.println("Route:");
-            // model.printRoute();
+            System.out.println("Route:");
+            model.printRoute();
         } catch (IllegalStateException e) {
             System.out.printf("ERROR: %s\n", e.getMessage());
         }
@@ -105,8 +105,8 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            // System.out.println("Route:");
-            // model.printRoute();
+            System.out.println("Route:");
+            model.printRoute();
         } catch (IllegalStateException e) {
             System.out.printf("ERROR: %s\n", e.getMessage());
         }
