@@ -5,8 +5,18 @@ import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
 import com.grivera.util.Doubles;
+import com.grivera.util.MathUtil;
+import com.grivera.util.Pair;
+import com.grivera.util.Tuple;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 
 //imports for google OR-tools
 import com.google.ortools.Loader;
@@ -18,6 +28,9 @@ import com.google.ortools.linearsolver.MPVariable;
 public class ILPWeightedModel extends AbstractModel {
     private int[][] cachedX;
     private int cachedObjective;
+    private int totalCost;
+    private int totalPackets;
+    private Map<SensorNode, List<Pair<List<SensorNode>, Integer>>> history;
 
     public ILPWeightedModel(Network network) {
         super(network);
@@ -35,6 +48,12 @@ public class ILPWeightedModel extends AbstractModel {
     public void run() {
         super.run();
         this.solveIlp();
+        this.parseIlp();
+    }
+
+    public void run(int episodes) {
+        System.out.println("Warning: Ignoring episodes count; defaulting to 1...");
+        this.run();
     }
 
     @Override
@@ -46,20 +65,7 @@ public class ILPWeightedModel extends AbstractModel {
     @Override
     public int getTotalCost() {
         super.getTotalCost();
-
-        final Network network = this.getNetwork();
-        final List<SensorNode> nodes = network.getSensorNodes();
-        final int n = nodes.size();
-        int totalCost = 0;
-        for (SensorNode node1 : nodes) {
-            for (SensorNode node2 : nodes) {
-                if (node1.equals(node2)) {
-                    continue;
-                }
-                totalCost += this.cachedX[node1.getUuid() + n][node2.getUuid()] * network.calculateMinCost(node1, node2);
-            }
-        }
-        return totalCost;
+        return this.totalCost;
     }
 
     @Override
@@ -71,16 +77,7 @@ public class ILPWeightedModel extends AbstractModel {
     @Override
     public int getTotalPackets() {
         super.getTotalPackets();
-        Network network = this.getNetwork();
-
-        List<StorageNode> dNodes = network.getStorageNodes();
-        final int n = network.getSensorNodes().size();
-        int totalPackets = 0;
-        final int sinkIndex = 2 * n + 1;
-        for (StorageNode sn : dNodes) {
-            totalPackets += this.cachedX[sn.getUuid() + n][sinkIndex];
-        }
-        return totalPackets;
+        return this.totalPackets;
     }
 
     /* TODO(grivera64@) Verify! */
@@ -385,24 +382,141 @@ public class ILPWeightedModel extends AbstractModel {
 
     }
 
+    private void parseIlp() {
+        int[][] oldX = new int[this.cachedX.length][this.cachedX[this.cachedX.length - 1].length];
+        for (int row = 0; row < this.cachedX.length; row++) {
+            System.arraycopy(this.cachedX[row], 0, oldX[row], 0, this.cachedX[row].length);
+        }
+
+        final Network network = this.getNetwork();
+        final List<DataNode> dns = network.getDataNodes();
+        final List<StorageNode> sns = network.getStorageNodes();
+        final List<SensorNode> nodes = network.getSensorNodes();
+        final int n = network.getSensorNodeCount();
+        final int sourceIndex = 0;
+        final int sinkIndex = 2 * n + 1;
+
+        this.totalPackets = 0;
+        for (StorageNode sn : sns) {
+            this.totalPackets += this.cachedX[sn.getUuid() + n][sinkIndex];
+        }
+
+        this.totalCost = 0;
+        for (SensorNode node1 : nodes) {
+            for (SensorNode node2 : nodes) {
+                if (node1.equals(node2)) {
+                    continue;
+                }
+                totalCost += this.cachedX[node1.getUuid() + n][node2.getUuid()] * network.calculateMinCost(node1, node2);
+            }
+        }
+
+        this.history = new TreeMap<>();
+        int flowEdge;
+        int packetEdge;
+        int storeEdge;
+        int sentPackets;
+        // Find for direct DN->SN pairs
+        for (DataNode dn : dns) {
+            packetEdge = this.cachedX[sourceIndex][dn.getUuid()];
+            for (StorageNode sn : network.getStorageNodes()) {
+                flowEdge = this.cachedX[dn.getUuid() + n][sn.getUuid()];
+                storeEdge = this.cachedX[sn.getUuid() + n][sinkIndex];
+                sentPackets = (int) MathUtil.min(packetEdge, flowEdge, storeEdge);
+
+                this.history.putIfAbsent(dn, new ArrayList<>());
+                this.history.get(dn).add(Pair.of(List.of(dn, sn), sentPackets));
+
+                this.cachedX[sourceIndex][dn.getUuid()] -= sentPackets;
+                this.cachedX[dn.getUuid() + n][sn.getUuid()] -= sentPackets;
+                this.cachedX[sn.getUuid() + n][sinkIndex] -= sentPackets;
+            }
+        }
+
+        // Run a BFS to find shortest paths of flow for each packet
+        Queue<Tuple<List<SensorNode>, Integer, Integer>> q = new ArrayDeque<>();
+        List<SensorNode> tmpPath;
+        for (DataNode dn : dns) {
+            tmpPath = new ArrayList<>();
+            tmpPath.add(dn);
+            q.offer(Tuple.of(tmpPath, this.cachedX[sourceIndex][dn.getUuid()], dn.getOverflowPacketValue()));
+            this.cachedX[sourceIndex][dn.getUuid()] = 0;
+        }
+
+        Tuple<List<SensorNode>, Integer, Integer> currTuple;
+        List<SensorNode> currPath;
+        SensorNode currNode;
+        int currValue;
+
+        Set<SensorNode> neighbors;
+        int newFlow;
+        int packetsToSend;
+        List<SensorNode> newPath;
+        while (!q.isEmpty()) {
+            currTuple = q.poll();
+            currPath = currTuple.first();
+            currNode = currPath.getLast();
+            packetsToSend = currTuple.second();
+            currValue = currTuple.third();
+
+            /* If sending to sink */
+            storeEdge = this.cachedX[currNode.getUuid() + n][sinkIndex];
+            if (storeEdge > 0) {
+                sentPackets = (int) MathUtil.min(storeEdge, packetsToSend);
+
+                this.history.putIfAbsent(currNode, new ArrayList<>());
+                this.history.get(currNode).add(Pair.of(currPath, sentPackets));
+
+                this.cachedX[currNode.getUuid() + n][sinkIndex] -= sentPackets;
+                packetsToSend -= sentPackets;
+            }
+
+            neighbors = network.getNeighbors(currNode);
+            for (SensorNode neighbor : neighbors) {
+                /* Ignore exhausted arcs */
+                if (this.cachedX[currNode.getUuid() + n][neighbor.getUuid()] <= 0) {
+                    continue;
+                }
+
+                /* Find minimum flow that can be sent to a neighbor */
+                flowEdge = this.cachedX[currNode.getUuid() + n][neighbor.getUuid()];
+                newFlow = (int) MathUtil.min(flowEdge, packetsToSend);
+
+                newPath = new ArrayList<>(currPath);
+                newPath.add(neighbor);
+                q.offer(Tuple.of(newPath, newFlow, currValue));
+
+                packetsToSend -= newFlow;
+                this.cachedX[currNode.getUuid() + n][neighbor.getUuid()] -= newFlow;
+            }
+        }
+        this.cachedX = oldX;
+    }
+
     @Override
     public void printRoute() {
         super.printRoute();
-
-        Network network = this.getNetwork();
-        List<DataNode> dNodes = network.getDataNodes();
-        List<StorageNode> sNodes = network.getStorageNodes();
-        final int n = dNodes.size() + sNodes.size();
-
+        
+        SensorNode start;
+        List<SensorNode> route;
         int flow;
-        for (DataNode dn : dNodes) {
-            for (StorageNode sn : sNodes) {
-                flow = this.cachedX[dn.getUuid() + n][sn.getUuid()];
-                if (flow > 0) {
-                    System.out.printf("%s -> %s (flow = %d)\n", dn.getName(), sn.getName(), flow);
-                    // System.out.printf("\tCost: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * network.calculateMinCost(dn, sn));
-                    // System.out.printf("\tValue: %.0f\n", this.cachedX[dn.getUuid() + n][sn.getUuid()].solutionValue() * dn.getOverflowPacketValue());
+        StringJoiner str;
+        for (Map.Entry<SensorNode, List<Pair<List<SensorNode>, Integer>>> entry : this.history.entrySet()) {
+            start = entry.getKey();
+            for (Pair<List<SensorNode>, Integer> pair : entry.getValue()) {
+                route = pair.first();
+                flow = pair.second();
+                if (flow <= 0) {
+                    continue;
                 }
+
+                str = new StringJoiner(" -> ", "[", "]");
+                for (SensorNode node : route) {
+                    str.add(node.getName());
+                }
+
+                System.out.printf("%s -> %s (flow = %d)\n", start.getName(), route.getLast().getName(), flow);
+                System.out.printf("\t%s\n", str);
             }
         }
     }

@@ -129,6 +129,7 @@ public class PMPGreedyModel extends AbstractModel {
 
     @Override
     public void printRoute() {
+        super.printRoute();
         StringJoiner str;
 
         for (Map.Entry<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> entry : this.routes.entrySet()) {

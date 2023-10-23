@@ -3,7 +3,7 @@ package com.grivera.generator.sensors;
 /**
  * Represents the basic form of a Sensor Node in a Sensor com.grivera.generator.Network
  */
-public abstract class SensorNode {
+public abstract class SensorNode implements Comparable<SensorNode> {
 
     private static int uuidCounter = 1;
 
@@ -112,6 +112,11 @@ public abstract class SensorNode {
             return false;
         }
         return this.getUuid() == sn.getUuid();
+    }
+
+    @Override
+    public int compareTo(SensorNode sn) {
+        return Integer.compare(this.getId(), sn.getId());
     }
 
     @Override

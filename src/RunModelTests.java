@@ -48,6 +48,13 @@ public class RunModelTests {
         }
         System.out.println();
 
+        System.out.print("Print out route? ([Y]es/[N]o)\n(Yes) > ");
+        String printRoute = keyboard.nextLine();
+        boolean showRoute = true;
+        if (printRoute.contains("no") || printRoute.contains("No") || printRoute.equalsIgnoreCase("n")) {
+            showRoute = false;
+        }
+
         network.setBatteryCapacity(Integer.MAX_VALUE);
 
         System.out.println("Running models...");
@@ -61,8 +68,10 @@ public class RunModelTests {
         System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-        System.out.println("Route:");
-        model.printRoute();
+        if (showRoute) {
+            System.out.println("Route:");
+            model.printRoute();
+        }
         System.out.println();
 
         try {
@@ -73,8 +82,10 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            System.out.println("Route:");
-            model.printRoute();
+            if (showRoute) {
+                System.out.println("Route:");
+                model.printRoute();
+            }
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
@@ -90,8 +101,10 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            System.out.println("Route:");
-            model.printRoute();
+            if (showRoute) {
+                System.out.println("Route:");
+                model.printRoute();
+            }
         } catch (IllegalStateException e) {
             System.out.printf("ERROR: %s\n", e.getMessage());
         }
@@ -105,8 +118,10 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Packets preserved: %,d\n", model.getTotalPackets());
-            System.out.println("Route:");
-            model.printRoute();
+            if (showRoute) {
+                System.out.println("Route:");
+                model.printRoute();
+            }
         } catch (IllegalStateException e) {
             System.out.printf("ERROR: %s\n", e.getMessage());
         }
