@@ -445,49 +445,51 @@ public class ILPWeightedModel extends AbstractModel {
 
         Tuple<List<SensorNode>, Integer, Integer> currTuple;
         List<SensorNode> currPath;
+        SensorNode currStart;
         SensorNode currNode;
         int currValue;
 
         Set<SensorNode> neighbors;
-        int newFlow;
         int packetsToSend;
+        int packetsToStore;
         List<SensorNode> newPath;
         while (!q.isEmpty()) {
             currTuple = q.poll();
             currPath = currTuple.first();
+            currStart = currPath.getFirst();
             currNode = currPath.getLast();
             packetsToSend = currTuple.second();
             currValue = currTuple.third();
+            if (packetsToSend <= 0) {
+                continue;
+            }
 
             /* If sending to sink */
             storeEdge = this.cachedX[currNode.getUuid() + n][sinkIndex];
-            if (storeEdge > 0) {
-                sentPackets = (int) MathUtil.min(storeEdge, packetsToSend);
+            packetsToStore = (int) MathUtil.min(storeEdge, packetsToSend);
+            if (packetsToStore > 0) {
+                this.cachedX[currNode.getUuid() + n][sinkIndex] -= packetsToStore;
+                packetsToSend -= packetsToStore;
 
-                this.history.putIfAbsent(currNode, new ArrayList<>());
-                this.history.get(currNode).add(Pair.of(currPath, sentPackets));
-
-                this.cachedX[currNode.getUuid() + n][sinkIndex] -= sentPackets;
-                packetsToSend -= sentPackets;
+                this.history.putIfAbsent(currStart, new ArrayList<>());
+                this.history.get(currStart).add(Pair.of(new ArrayList<>(currPath), packetsToStore));
             }
 
             neighbors = network.getNeighbors(currNode);
             for (SensorNode neighbor : neighbors) {
-                /* Ignore exhausted arcs */
-                if (this.cachedX[currNode.getUuid() + n][neighbor.getUuid()] <= 0) {
+                /* Find minimum flow that can be sent to a neighbor */
+                flowEdge = this.cachedX[currNode.getUuid() + n][neighbor.getUuid()];
+                sentPackets = (int) MathUtil.min(flowEdge, packetsToSend);
+                if (sentPackets <= 0) {
                     continue;
                 }
 
-                /* Find minimum flow that can be sent to a neighbor */
-                flowEdge = this.cachedX[currNode.getUuid() + n][neighbor.getUuid()];
-                newFlow = (int) MathUtil.min(flowEdge, packetsToSend);
-
                 newPath = new ArrayList<>(currPath);
                 newPath.add(neighbor);
-                q.offer(Tuple.of(newPath, newFlow, currValue));
+                q.offer(Tuple.of(newPath, sentPackets, currValue));
 
-                packetsToSend -= newFlow;
-                this.cachedX[currNode.getUuid() + n][neighbor.getUuid()] -= newFlow;
+                packetsToSend -= sentPackets;
+                this.cachedX[currNode.getUuid() + n][neighbor.getUuid()] -= sentPackets;
             }
         }
         this.cachedX = oldX;
@@ -506,7 +508,10 @@ public class ILPWeightedModel extends AbstractModel {
             for (Pair<List<SensorNode>, Integer> pair : entry.getValue()) {
                 route = pair.first();
                 flow = pair.second();
-                if (flow <= 0) {
+                if (flow < 0) {
+                    throw new IllegalStateException(String.format("Flow from %s -> %s is negative", route.getFirst(), route.getLast()));
+                }
+                if (flow == 0) {
                     continue;
                 }
 

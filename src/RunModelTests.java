@@ -55,7 +55,15 @@ public class RunModelTests {
             showRoute = false;
         }
 
-        network.setBatteryCapacity(Integer.MAX_VALUE);
+        System.out.printf("Please set the initial battery capacity\n(%d) > ", network.getDataNodeById(1).getEnergy());
+        String setbatteryCapacity = keyboard.nextLine();
+
+        int batteryCapacity = Integer.MAX_VALUE;
+        if (!(setbatteryCapacity.isBlank() || setbatteryCapacity.isEmpty())) {
+            batteryCapacity = Integer.parseInt(setbatteryCapacity);
+        }
+
+        network.setBatteryCapacity(batteryCapacity);
 
         System.out.println("Running models...");
         System.out.println("Energy = " + network.getDataNodeById(1).getEnergy());
