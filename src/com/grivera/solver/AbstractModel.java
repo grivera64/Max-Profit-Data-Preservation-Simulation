@@ -27,6 +27,14 @@ public abstract class AbstractModel implements Model {
         this.network.resetPackets();
     }
 
+    public void run(int episodes) {
+        if (episodes < 1) {
+            throw new IllegalArgumentException("Episodes count cannot be negative!");
+        }
+        this.hasRan = true;
+        this.network.resetPackets();
+    }
+
     @Override
     public int getTotalCost() {
         if (!this.hasRan) {
@@ -55,5 +63,9 @@ public abstract class AbstractModel implements Model {
         }
 
         return false;
+    }
+
+    public boolean hasRan() {
+        return this.hasRan;
     }
 }

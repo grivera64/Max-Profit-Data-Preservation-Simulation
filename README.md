@@ -58,12 +58,12 @@ cd src
 
 Windows:
 ```batch
-javac -p . *.java -d ../bin
+javac -cp ".;%PATH_TO_GUAVA%/*" -p . *.java -d ../bin
 ```
 
 Mac/Linux:
 ```sh
-find . -name "*.java" -type f -exec javac -p . -d ../bin {} \;
+javac -cp ".:${PATH_TO_GUAVA}/*" -p . *.java -d ../bin
 ```
 
 ### 4. Change directories into the binaries folder
@@ -74,8 +74,13 @@ cd bin
 ```
 
 ### 5. Run the program
+
+```batch
+java -cp ".;%PATH_TO_GUAVA%/*" -p . RunModelTests
+```
+
 ```sh
-java RunModelTests
+java -cp ".;${PATH_TO_GUAVA}/*" -p . RunModelTests
 ```
 
 ## Example
@@ -95,16 +100,66 @@ F > figure_3_sensor_network.sn
 Where is your installation of cs2.exe located?
 (".") > $PATH_TO_CS2
 
+How many episodes should MARL run?
+(100) > 
+
 Running models...
 =================
 Greedy:
 Cost: 6412 µJ
 Profit: 9452 µJ
 
+DN01 -> SN03 (flow = 2)
+	[DN01 -> SN03]
+DN02 -> SN04 (flow = 2)
+	[DN02 -> SN04]
+DN03 -> SN02 (flow = 2)
+	[DN03 -> SN02]
+DN04 -> SN01 (flow = 2)
+	[DN04 -> SN01]
+DN05 -> SN05 (flow = 2)
+	[DN05 -> SN05]
+
 CS2 (Optimal):
-Saved flow network in file "cs2_tmp_20230518164514.inp"!
+Saved flow network in file "cs2_tmp_20230520150722.inp"!
 Cost: 6406 µJ
 Profit: 9458 µJ
+
+DN01 -> SN03 (flow = 2)
+	[DN01 -> SN03]
+DN02 -> SN04 (flow = 2)
+	[DN02 -> SN04]
+DN03 -> SN05 (flow = 2)
+	[DN03 -> SN05]
+DN04 -> SN01 (flow = 2)
+	[DN04 -> SN01]
+DN05 -> SN02 (flow = 2)
+	[DN05 -> SN02]
+
+MARL (100 episodes):
+Cost: 6406 µJ
+Profit: 9458 µJ
+
+DN01 -> SN03
+	[DN01 -> SN03]
+DN01 -> SN03
+	[DN01 -> SN03]
+DN02 -> SN04
+	[DN02 -> SN04]
+DN02 -> SN04
+	[DN02 -> SN04]
+DN03 -> SN05
+	[DN03 -> SN05]
+DN03 -> SN05
+	[DN03 -> SN05]
+DN04 -> SN01
+	[DN04 -> SN01]
+DN04 -> SN01
+	[DN04 -> SN01]
+DN05 -> SN02
+	[DN05 -> SN02]
+DN05 -> SN02
+	[DN05 -> SN02]
 
 ```
 

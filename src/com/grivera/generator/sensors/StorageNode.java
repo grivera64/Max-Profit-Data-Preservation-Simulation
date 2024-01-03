@@ -10,11 +10,13 @@ public class StorageNode extends SensorNode {
     private static final double E_store = 100e-9;
 
     private static int idCounter = 1;
+    private int id;
     private int capacity;
     private int usedSpace;
 
     public StorageNode(double x, double y, double tr, int capacity) {
-        super(x, y, tr, String.format("SN%02d", idCounter++));
+        super(x, y, tr, String.format("SN%02d", idCounter));
+        this.id = idCounter++;
         this.setCapacity(capacity);
     }
 
@@ -53,6 +55,11 @@ public class StorageNode extends SensorNode {
     @Override
     public void resetPackets() {
         this.usedSpace = 0;
+    }
+
+    @Override
+    public int getId() {
+        return this.id;
     }
 
     public int getSpaceLeft() {
