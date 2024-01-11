@@ -44,7 +44,7 @@ public class NetState {
         }
     }
 
-    public void resetForEpisode(){
+    public void reset(){
         //for episode, reset stateTransitions, packetsStoredinNode, packetsStoredinNodeNext, maxQnextTransition
         //stateTransitionReward = new HashMap<>();
         packetsStoredInNode = new HashMap<>();
