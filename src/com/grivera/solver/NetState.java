@@ -1,9 +1,6 @@
 package com.grivera.solver;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.grivera.generator.Network;
 import com.grivera.generator.sensors.DataNode;
@@ -15,20 +12,20 @@ public class NetState {
     private int numAgents;
     private List<Agent> agents;
     private Map<String, Double> Q;
-    public Map<SensorNode, Map<SensorNode, Double>> edgeReward = new HashMap<>();
-    public Map<String, Double> stateTransitionReward = new HashMap<>();
-    public Map<String, Double> stateTransitionProfit = new HashMap<>();
+    private Map<SensorNode, Map<SensorNode, Double>> edgeReward = new HashMap<>();
+    private Map<String, Double> stateTransitionReward = new HashMap<>();
+    private Map<String, Double> stateTransitionProfit = new HashMap<>();
 
     public List<String> stateTransitions = new ArrayList<>();
     public Map<StorageNode, Integer> packetsStoredInNode = new HashMap<>();
     public Map<StorageNode, Integer> packetsStoredInNodeNext = new HashMap<>();
-    public Map<String,Double> maxQNextTransition = new HashMap<>();
+    public Map<String, Double> maxQNextTransition = new HashMap<>();
 
     public NetState(Network network) {
         this.numNodes = network.getSensorNodeCount();
         this.numAgents = network.getDataNodeCount() * network.getDataPacketCount();
         
-        agents = new ArrayList<>();
+        this.agents = new ArrayList<>();
         
         // for each agent/packet set current/original location and value
         Agent currAgent;
@@ -39,18 +36,18 @@ public class NetState {
                 currAgent.setOriginalLocation(dn);
                 currAgent.setPacketValue(dn.getOverflowPacketValue());
                 
-                agents.add(currAgent);
+                this.agents.add(currAgent);
             }
         }
     }
 
-    public void reset(){
+    public void reset() {
         //for episode, reset stateTransitions, packetsStoredinNode, packetsStoredinNodeNext, maxQnextTransition
         //stateTransitionReward = new HashMap<>();
-        packetsStoredInNode = new HashMap<>();
-        packetsStoredInNodeNext = new HashMap<>();
-        maxQNextTransition = new HashMap<>();
-        stateTransitions = new ArrayList<>();
+        this.packetsStoredInNode = new HashMap<>();
+        this.packetsStoredInNodeNext = new HashMap<>();
+        this.maxQNextTransition = new HashMap<>();
+        this.stateTransitions = new ArrayList<>();
         
         // agent j is at source node Sj
         for (Agent agent : this.agents) {
@@ -61,7 +58,7 @@ public class NetState {
     }
 
     public List<Agent> getAgents() {
-        return agents;
+        return this.agents;
     }
 
     public void setAgents(List<Agent> agents) {
@@ -70,26 +67,21 @@ public class NetState {
 
     public String encodeState() {
         // represent state as a string
-        StringBuilder state = new StringBuilder("");
-        for (Agent agent : agents) {
-            // state[agent.getCurrentLocation()] = 1.0;
-            state.append(agent.getCurrentLocation().getUuid());
+        StringJoiner state = new StringJoiner("-");
+        for (Agent agent : this.agents) {
+            state.add(Integer.toString(agent.getCurrentLocation().getUuid()));
         }
         return state.toString();
     }
 
-    public void setQTable() {
+    public void initQTable() {
         this.Q = new HashMap<>();
-    }
-
-    public Map<String, Double> getQTable() {
-        return Q;
     }
 
     public boolean allAgentsAtStorage() {
         // returns true if all agents (packets) are stored in a Storage node
         // returns false otherwise
-        for (Agent agent : agents) {
+        for (Agent agent : this.agents) {
             if (!agent.getStoredInStorage()) {
                 return false;
             }
@@ -99,10 +91,9 @@ public class NetState {
 
     public String encodeNextState() {
         // represent state as a string
-        StringBuilder state = new StringBuilder("");
-        for (Agent agent : agents) {
-            // state[agent.getCurrentLocation()] = 1.0;
-            state.append(agent.getNextLocation().getUuid());
+        StringJoiner state = new StringJoiner("-");
+        for (Agent agent : this.agents) {
+            state.add(Integer.toString(agent.getNextLocation().getUuid()));
         }
         return state.toString();
     }
@@ -120,13 +111,66 @@ public class NetState {
     }
 
     public void addStateTransition(String bestStateTransition) {
-        stateTransitions.add(bestStateTransition);
+        this.stateTransitions.add(bestStateTransition);
     }
     public Map<String, Double> getStateTransitionProfit() {
-        return stateTransitionProfit;
+        return this.stateTransitionProfit;
     }
 
     public void setStateTransitionProfit(Map<String, Double> stateTransitionProfit) {
         this.stateTransitionProfit = stateTransitionProfit;
+    }
+
+    public double getEdgeReward(SensorNode from, SensorNode to) {
+        if (!this.edgeReward.containsKey(from)) {
+            throw new IllegalArgumentException(String.format("edge from %s does not exist", from.getName()));
+        }
+        if (!this.edgeReward.get(from).containsKey(to)) {
+            throw new IllegalArgumentException(String.format("edge from %s to %s does not exist", from.getName(), to.getName()));
+        }
+        return this.edgeReward.get(from).get(to);
+    }
+
+    public void setEdgeReward(SensorNode from, SensorNode to, double reward) {
+        this.edgeReward.putIfAbsent(from, new HashMap<>());
+        this.edgeReward.get(from).put(to, reward);
+    }
+
+    public boolean edgeHasReward(SensorNode from, SensorNode to) {
+        return this.edgeReward.containsKey(from) && this.edgeReward.get(from).containsKey(to);
+    }
+
+    public double getTransitionReward(String encodedTransition) {
+        if (!this.stateTransitionReward.containsKey(encodedTransition)) {
+            throw new IllegalArgumentException(String.format("State %s does not have a reward", encodedTransition));
+        }
+        return this.stateTransitionReward.get(encodedTransition);
+    }
+
+    public void setTransitionReward(String encodedTransition, double reward) {
+        this.stateTransitionReward.put(encodedTransition, reward);
+    }
+
+    public double getTransitionProfit(String encodedTransition) {
+        if (!this.stateTransitionProfit.containsKey(encodedTransition)) {
+            throw new IllegalArgumentException(String.format("State %s does not have a reward", encodedTransition));
+        }
+        return this.stateTransitionProfit.get(encodedTransition);
+    }
+
+    public void setTransitionProfit(String encodedTransition, double profit) {
+        this.stateTransitionProfit.put(encodedTransition, profit);
+    }
+
+    public double getQ(String encodedTransition) {
+        return this.Q.get(encodedTransition);
+    }
+
+    public void setQ(String encodedTransition, double qValue) {
+        this.Q.put(encodedTransition, qValue);
+    }
+
+    public boolean containsQ(String encodedTransition) {
+        return this.Q.containsKey(encodedTransition) && Q.get(encodedTransition) != null;
     }
 }
