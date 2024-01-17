@@ -155,9 +155,9 @@ public class PMPMarlModel extends AbstractModel {
                 }
                 for (int j = 0; j < state.stateTransitions.size(); j++) {
                     String transition = state.stateTransitions.get(j); // (s,t)
-                    double totalReward = 0.0;// r(s,t)
-                    double totalCost = 0.0; // c(s,t)
-                    double stateTransitProfit; // p(s,t)
+                    double totalReward = 0.0;   // r(s,t)
+                    double totalCost = 0.0;     // c(s,t)
+                    double stateTransitProfit;  // p(s,t)
                     for (Agent agent : state.getAgents()) {
                         if (j + 1 < agent.getRoute().size()) {
                             SensorNode currNode = agent.getRoute().get(j);
@@ -174,7 +174,7 @@ public class PMPMarlModel extends AbstractModel {
                     state.setTransitionProfit(transition, stateTransitProfit); // line 33.
                     double newQValue = (1 - alpha) * state.getQ(transition)
                             + alpha * (state.getTransitionProfit(transition)
-                                    + gamma * state.maxQNextTransition.get(transition));
+                                    + gamma * state.getMaxQ(transition));
                     state.setQ(transition, newQValue); // line 34.
                 }
 
@@ -339,7 +339,7 @@ public class PMPMarlModel extends AbstractModel {
             }
         }
         String sStateTState = state.encodeST();
-        state.maxQNextTransition.put(sStateTState, maxQValue);
+        state.setMaxQ(sStateTState, maxQValue);
         return maxQValue;
     }
 

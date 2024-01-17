@@ -173,4 +173,12 @@ public class NetState {
     public boolean containsQ(String encodedTransition) {
         return this.Q.containsKey(encodedTransition) && Q.get(encodedTransition) != null;
     }
+
+    public double getMaxQ(String encodedTransition) {
+        return this.maxQNextTransition.get(encodedTransition);
+    }
+    
+    public void setMaxQ(String encodedTransition, double maxQ) {
+        this.maxQNextTransition.put(encodedTransition, maxQ);
+    }
 }
