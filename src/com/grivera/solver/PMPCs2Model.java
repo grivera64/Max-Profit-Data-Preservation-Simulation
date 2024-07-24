@@ -13,33 +13,33 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-public class Cs2Model extends AbstractModel {
+public class PMPCs2Model extends AbstractModel {
 
     private final String cs2Location;
     private int totalProfit;
     private List<Tuple<SensorNode, SensorNode, Integer>> flows;
 
-    public Cs2Model(Network network) {
+    public PMPCs2Model(Network network) {
         this(network, ".");
     }
-    public Cs2Model(Network network, String cs2Location) {
+    public PMPCs2Model(Network network, String cs2Location) {
         super(network);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public Cs2Model(String fileName) {
+    public PMPCs2Model(String fileName) {
         this(fileName, ".");
     }
 
     /* Note, this isn't thread safe */
-    public Cs2Model(String fileName, String cs2Location) {
+    public PMPCs2Model(String fileName, String cs2Location) {
         super(fileName);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public Cs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
+    public PMPCs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
         this.cs2Location = cs2Location;
         this.verifyCs2();
@@ -47,7 +47,7 @@ public class Cs2Model extends AbstractModel {
 
     private void verifyCs2() {
         File currDir = new File(this.cs2Location);
-        File[] files = currDir.listFiles(f -> f.getName().startsWith("cs2."));
+        File[] files = currDir.listFiles(f -> f.getName().matches("^cs2(.exe)?$"));
         if (files == null || files.length < 1) {
             throw new IllegalArgumentException(
                     String.format("Couldn't find CS2 program [Searched Dir: \"%s\"]", currDir.getAbsoluteFile())

@@ -1,9 +1,9 @@
-import com.grivera.solver.Cs2Model;
+import com.grivera.solver.PMPCs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
-import com.grivera.solver.PMPMarl;
+import com.grivera.solver.PMPMarlModel;
 
 import java.util.Scanner;
 
@@ -74,7 +74,7 @@ public class RunModelTests {
 
         try {
             System.out.println("CS2 (Optimal):");
-            model = new Cs2Model(network, cs2Location);
+            model = new PMPCs2Model(network, cs2Location);
             model.run();
             System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
@@ -88,7 +88,7 @@ public class RunModelTests {
         }
 
         System.out.printf("MARL (%d episodes):\n", episodes);
-        model = new PMPMarl(network);
+        model = new PMPMarlModel(network);
         model.run(episodes);
         System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());

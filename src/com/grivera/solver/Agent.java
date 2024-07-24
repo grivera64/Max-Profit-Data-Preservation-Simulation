@@ -8,9 +8,11 @@ import com.grivera.generator.sensors.SensorNode;
 public class Agent {
     private SensorNode currLocation;
     private SensorNode originalLocation;
+    private SensorNode lastStateLocation;
     private int packetValue;
     private SensorNode nextLocation;
     private int travelCost = 0;
+    private double rewardCol = 0;
     private boolean storedInStorage = false;
     private boolean storedInStorageNext = false;
     private List<SensorNode> route = new ArrayList<SensorNode>();
@@ -47,6 +49,7 @@ public class Agent {
 
     public void resetTravel() {
         travelCost = 0;
+        rewardCol = 0;
         storedInStorage = false;
         storedInStorageNext = false;
         route = new ArrayList<>();
@@ -84,13 +87,19 @@ public class Agent {
     public void setTravelCost(int travelCost) {
         this.travelCost = travelCost;
     }
+    public double getRewardCol() {
+        return rewardCol;
+    }
+    public void setRewardCol(double rewardCol) {
+        this.rewardCol = rewardCol;
+    }
 
     public void addToRoute() {
-        if(route.isEmpty()){
+        if (route.isEmpty()) {
             route.add(nextLocation);
             return;
         }
-        if(!(route.get(route.size()-1)==nextLocation)){
+        if (!(route.get(route.size() - 1) == nextLocation)) {
             route.add(nextLocation);
         }
         
@@ -101,14 +110,26 @@ public class Agent {
     }
 
     public int calculateCostOfPath() {
-        int totalCost=0;
-        for (int i=1; i<route.size(); i++) {
-            SensorNode prevNode = route.get(i-1);
+        int totalCost = 0;
+        for (int i = 1; i < route.size(); i++) {
+            SensorNode prevNode = route.get(i - 1);
             SensorNode currNode = route.get(i);
 
-            totalCost+=prevNode.calculateTransmissionCost(currNode);
-            totalCost+=currNode.calculateReceivingCost();
+            totalCost += prevNode.calculateTransmissionCost(currNode);
+            totalCost += currNode.calculateReceivingCost();
         }
         return totalCost;
+    }
+
+    public void resetLocation() {
+        this.setCurrentLocation(this.getOriginalLocation());
+    }
+
+    public SensorNode getLastStateLocation() {
+        return lastStateLocation;
+    }
+
+    public void setLastStateLocation(SensorNode node) {
+        lastStateLocation=node;
     }
 }

@@ -1,4 +1,11 @@
+.DS_STORE
+
 out/
 .idea/
+.vscode/
+cs2/
+*.log
+.DS_STORE
 *.txt
 *.exe
+*.class
