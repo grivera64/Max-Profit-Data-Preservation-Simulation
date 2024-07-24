@@ -76,12 +76,14 @@ cd bin
 
 ### 5. Run the program
 
+Windows:
 ```batch
 java -cp ".;%PATH_TO_GUAVA%/*" -p . RunModelTests
 ```
 
+Mac/Linux:
 ```sh
-java -cp ".;${PATH_TO_GUAVA}/*" -p . RunModelTests
+java -cp ".:${PATH_TO_GUAVA}/*" -p . RunModelTests
 ```
 
 ## Example
