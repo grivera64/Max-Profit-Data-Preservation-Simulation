@@ -8,8 +8,6 @@ import com.grivera.generator.sensors.SensorNode;
 import com.grivera.generator.sensors.StorageNode;
 
 public class NetState {
-    private int numNodes;
-    private int numAgents;
     private List<Agent> agents;
     private Map<String, Double> Q;
     private Map<SensorNode, Map<SensorNode, Double>> edgeReward = new HashMap<>();
@@ -22,9 +20,6 @@ public class NetState {
     public Map<String, Double> maxQNextTransition = new HashMap<>();
 
     public NetState(Network network) {
-        this.numNodes = network.getSensorNodeCount();
-        this.numAgents = network.getDataNodeCount() * network.getDataPacketCount();
-        
         this.agents = new ArrayList<>();
         
         // for each agent/packet set current/original location and value

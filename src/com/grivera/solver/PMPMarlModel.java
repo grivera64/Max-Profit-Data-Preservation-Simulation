@@ -82,7 +82,6 @@ public class PMPMarlModel extends AbstractModel {
         state.initQTable();
 
         ProgressBar bar = new ProgressBar(epi, 50, "Training");
-        String lastStateTransition = "";
         for (int i = 0; i < epi; i++) { // learning Stage //line 1
             bar.step();
             updateHyperParams(i);
@@ -98,14 +97,10 @@ public class PMPMarlModel extends AbstractModel {
 
                 moveAgentsToState(state);
                 // update state-reward value
-                double newVal = 0.0;
-                String stateTransition = state.encodeST();
                 for (Agent agent : state.getAgents()) {
                     if (!state.edgeHasReward(agent.getCurrentLocation(), agent.getNextLocation())) {
                         updateEdgeReward(state, agent);
                     }
-                    // after this add to sum
-                    newVal += state.getEdgeReward(agent.getCurrentLocation(), agent.getNextLocation());
                 }
                 // commenting out this line, state transition reward not being updated here
 
@@ -121,7 +116,6 @@ public class PMPMarlModel extends AbstractModel {
                                                                                                             // being
                                                                                                             // picked
                 state.setQ(sStateTState, newQValue);
-                lastStateTransition = sStateTState;
                 // s=t move to next state
                 // for each agent:
                 // so currentlocation=nextLocation
@@ -213,27 +207,6 @@ public class PMPMarlModel extends AbstractModel {
         this.totalCost = costOfRoute;
         this.totalProfit = profitOfRoute;
         this.finalState = state;
-    }
-
-    private void updateGlobalProfit(NetState state, String lastStateTransition) {
-        double globalProfit;
-        globalProfit = state.getTransitionReward(lastStateTransition);
-        int transmitCost = 0;
-        int receiveCost = 0;
-        for (Agent agent : state.getAgents()) {
-            transmitCost += agent.getLastStateLocation().calculateTransmissionCost(agent.getCurrentLocation());
-            receiveCost += agent.getCurrentLocation().calculateReceivingCost();
-        }
-        globalProfit -= transmitCost + receiveCost;
-        state.setTransitionProfit(lastStateTransition, globalProfit);
-    }
-
-    private void updateGlobalReward(NetState state, String lastStateTransition) {
-        double globalReward = 0.0;
-        for (Agent agent : state.getAgents()) {
-            globalReward += state.getEdgeReward(agent.getLastStateLocation(), agent.getCurrentLocation());
-        }
-        state.setTransitionReward(lastStateTransition, globalReward);
     }
 
     private void moveAgentsToState(NetState state) {
