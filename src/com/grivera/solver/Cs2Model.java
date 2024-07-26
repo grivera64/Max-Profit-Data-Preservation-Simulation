@@ -18,8 +18,8 @@ import java.util.*;
 public class Cs2Model extends AbstractModel {
 
     private final String cs2Location;
-    private int totalCost;
-    private List<Tuple<DataNode, StorageNode, Integer>> flows;
+    private long totalCost;
+    private List<Tuple<DataNode, StorageNode, Long>> flows;
 
     public Cs2Model(Network network) {
         this(network, ".");
@@ -114,7 +114,7 @@ public class Cs2Model extends AbstractModel {
         StorageNode tmpDst;
         int srcId;
         int dstId;
-        int tmpFlow;
+        long tmpFlow;
 
         Network network = this.getNetwork();
 
@@ -128,7 +128,7 @@ public class Cs2Model extends AbstractModel {
 
                 switch (lineSplit[0].charAt(0)) {
                     case 's':
-                        this.totalCost = Integer.parseInt(lineSplit[1]);
+                        this.totalCost = Long.parseLong(lineSplit[1]);
                         break;
                     case 'f':
                         srcId = Integer.parseInt(lineSplit[1]);
@@ -157,11 +157,11 @@ public class Cs2Model extends AbstractModel {
     }
 
     @Override
-    public int getTotalProfit() {
-        int totalProfit = 0;
+    public long getTotalProfit() {
+        long totalProfit = 0;
 
         Network network = this.getNetwork();
-        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
             totalProfit += network.calculateProfitOf(tuple.first(), tuple.second()) * tuple.third();
         }
         return totalProfit;
@@ -171,7 +171,7 @@ public class Cs2Model extends AbstractModel {
     public void printRoute() {
         StringJoiner str;
         Network network = this.getNetwork();
-        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
             if (tuple.third() > 0) {
                 System.out.printf("%s -> %s (flow = %d)\n", tuple.first().getName(), tuple.second().getName(), tuple.third());
 
@@ -185,7 +185,7 @@ public class Cs2Model extends AbstractModel {
     }
 
     @Override
-    public int getTotalCost() {
+    public long getTotalCost() {
         return this.totalCost;
     }
 

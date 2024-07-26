@@ -28,8 +28,8 @@ public class PMPMarlModel extends AbstractModel {
     private static final double storageReward = 1000;
     private static final double nonStorageReward = 1;
     private int storageCapacity;
-    private int totalCost;
-    private int totalProfit;
+    private long totalCost;
+    private long totalProfit;
     private NetState finalState;
 
     public PMPMarlModel(Network network) {
@@ -73,8 +73,8 @@ public class PMPMarlModel extends AbstractModel {
         episodes = epi;
         Network network = this.getNetwork();
 
-        int cost, reward, profit;
-        int max = Integer.MIN_VALUE; // line 0.
+        long cost, reward, profit;
+        long max = Long.MIN_VALUE; // line 0.
         // create state object with nodes and an agent for each packet
         NetState state = new NetState(network);
 
@@ -196,8 +196,8 @@ public class PMPMarlModel extends AbstractModel {
         }
         // return route, return Cost of Route, return profit of route
         // or just sys.out
-        int costOfRoute = 0;
-        int profitOfRoute = 0;
+        long costOfRoute = 0;
+        long profitOfRoute = 0;
         for (Agent agent : state.getAgents()) {
             costOfRoute += agent.calculateCostOfPath();
             profitOfRoute += agent.getPacketValue();
@@ -585,12 +585,12 @@ public class PMPMarlModel extends AbstractModel {
         }
     }
 
-    public int getTotalCost() {
+    public long getTotalCost() {
         super.getTotalCost();
         return this.totalCost;
     }
 
-    public int getTotalProfit() {
+    public long getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
     }

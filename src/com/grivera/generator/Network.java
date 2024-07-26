@@ -49,7 +49,7 @@ public interface Network {
      */
     boolean isFeasible();
     Map<SensorNode, Set<SensorNode>> getAdjacencyList();    // Returns the connection of nodes (using ID)
-    int calculateMinCost(SensorNode from, SensorNode to);
+    long calculateMinCost(SensorNode from, SensorNode to);
 
     /**
      * Returns the sensor nodes in the min-cost path between the from and to sensor
@@ -68,7 +68,7 @@ public interface Network {
      * @param path the path between two sensor nodes
      * @return the cost of the given path
      */
-    int calculateCostOfPath(List<SensorNode> path);
+    long calculateCostOfPath(List<SensorNode> path);
 
     /**
      * Saves the network into a .sn file format.
@@ -99,7 +99,7 @@ public interface Network {
     boolean canSendPackets(DataNode dn, StorageNode sn, int packets);
     void sendPackets(DataNode dn, StorageNode sn, int packets);
     void resetPackets();
-    int calculateProfitOf(DataNode from, StorageNode to);
+    long calculateProfitOf(DataNode from, StorageNode to);
     SensorNode getSensorNodeByUuid(int uuid);
     DataNode getDataNodeById(int id);
     StorageNode getStorageNodeById(int id);

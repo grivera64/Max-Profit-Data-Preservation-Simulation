@@ -18,8 +18,8 @@ import java.util.*;
 public class PMPCs2Model extends AbstractModel {
 
     private final String cs2Location;
-    private int totalProfit;
-    private List<Tuple<DataNode, StorageNode, Integer>> flows;
+    private long totalProfit;
+    private List<Tuple<DataNode, StorageNode, Long>> flows;
 
     public PMPCs2Model(Network network) {
         this(network, ".");
@@ -114,7 +114,7 @@ public class PMPCs2Model extends AbstractModel {
         StorageNode tmpDst;
         int srcId;
         int dstId;
-        int tmpFlow;
+        long tmpFlow;
 
         Network network = this.getNetwork();
 
@@ -128,7 +128,7 @@ public class PMPCs2Model extends AbstractModel {
 
                 switch (lineSplit[0].charAt(0)) {
                     case 's':
-                        this.totalProfit = -Integer.parseInt(lineSplit[1]);
+                        this.totalProfit = -Long.parseLong(lineSplit[1]);
                         break;
                     case 'f':
                         srcId = Integer.parseInt(lineSplit[1]);
@@ -157,7 +157,7 @@ public class PMPCs2Model extends AbstractModel {
     }
 
     @Override
-    public int getTotalProfit() {
+    public long getTotalProfit() {
         return this.totalProfit;
     }
 
@@ -165,7 +165,7 @@ public class PMPCs2Model extends AbstractModel {
     public void printRoute() {
         StringJoiner str;
         Network network = this.getNetwork();
-        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
             if (tuple.third() > 0) {
                 System.out.printf("%s -> %s (flow = %d)\n", tuple.first().getName(), tuple.second().getName(), tuple.third());
 
@@ -179,11 +179,11 @@ public class PMPCs2Model extends AbstractModel {
     }
 
     @Override
-    public int getTotalCost() {
+    public long getTotalCost() {
         int totalCost = 0;
 
         Network network = this.getNetwork();
-        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
             totalCost += network.calculateMinCost(tuple.first(), tuple.second()) * tuple.third();
         }
         return totalCost;

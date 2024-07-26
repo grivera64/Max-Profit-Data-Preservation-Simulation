@@ -1,4 +1,5 @@
 import com.grivera.solver.PMPCs2Model;
+import com.grivera.solver.Cs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
@@ -59,6 +60,7 @@ public class RunModelTests {
             episodes = Integer.parseInt(episodesString);
         }
         System.out.println();
+        
 
         System.out.println("Running models...");
         System.out.println("=================");
@@ -66,17 +68,32 @@ public class RunModelTests {
         Model model = new PMPGreedyModel(network);
         model.run();
         System.out.println("Greedy:");
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
         System.out.println();
         model.printRoute();
         System.out.println();
 
         try {
-            System.out.println("CS2 (Optimal):");
+            System.out.println("Profit Aware CS2 (PMPCs2Model):");
             model = new PMPCs2Model(network, cs2Location);
             model.run();
-            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.println();
+            model.printRoute();
+        } catch (IllegalArgumentException e) {
+            System.out.printf("WARNING: %s\n", e.getMessage());
+            System.out.println("Skipping Cs2Model...");
+        } finally {
+            System.out.println();
+        }
+
+        try {
+            System.out.println("Profit Oblivious CS2 (Cs2Model):");
+            model = new Cs2Model(network, cs2Location);
+            model.run();
+            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
             System.out.println();
             model.printRoute();

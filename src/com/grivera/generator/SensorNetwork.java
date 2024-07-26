@@ -26,7 +26,7 @@ public class SensorNetwork implements Network {
     private List<TransitionNode> tNodes;
     private Map<SensorNode, Set<SensorNode>> graph;
 
-    private final Map<Pair<SensorNode, SensorNode>, Integer> costMap = new HashMap<>();
+    private final Map<Pair<SensorNode, SensorNode>, Long> costMap = new HashMap<>();
 
     private final double width, length;
     private int dataPacketCount;
@@ -418,13 +418,13 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int calculateMinCost(SensorNode from, SensorNode to) {
+    public long calculateMinCost(SensorNode from, SensorNode to) {
         Pair<SensorNode, SensorNode> pair = Pair.of(from, to);
         if (costMap.containsKey(pair)) {
             return costMap.get(pair);
         }
 
-        int cost = this.calculateCostOfPath(this.getMinCostPath(from, to));
+        long cost = this.calculateCostOfPath(this.getMinCostPath(from, to));
         costMap.put(pair, cost);
         return cost;
     }
@@ -441,8 +441,8 @@ public class SensorNetwork implements Network {
      * {@inheritDoc}
      */
     @Override
-    public int calculateCostOfPath(List<SensorNode> path) {
-        int currCost = 0;
+    public long calculateCostOfPath(List<SensorNode> path) {
+        long currCost = 0;
         for (int i = 0; i < path.size() - 1; i++) {
             currCost += this.getCost(path.get(i), path.get(i + 1));
         }
@@ -547,7 +547,7 @@ public class SensorNetwork implements Network {
 
             /* Find all paths from DN# -> SN#, Dummy */
             writer.println("c DNs to SNs (and DN -> Dummy)");
-            int profit;
+            long profit;
             for (DataNode dn : this.dNodes) {
                 for (StorageNode sn : this.sNodes) {
                     writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
@@ -622,7 +622,7 @@ public class SensorNetwork implements Network {
 
             /* Find all paths from DN#->SN# */
             writer.println("c DNs to SNs");
-            int currCost;
+            long currCost;
             for (SensorNode dn : this.dNodes) {
                 for (SensorNode sn : this.sNodes) {
                     writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
@@ -647,14 +647,14 @@ public class SensorNetwork implements Network {
     }
 
     private List<SensorNode> bfs(Map<SensorNode, Set<SensorNode>> graph, SensorNode start, SensorNode end) {
-        Queue<Tuple<SensorNode, Integer, SensorNode>> q = new PriorityQueue<>(Comparator.comparing(Tuple::second));
+        Queue<Tuple<SensorNode, Long, SensorNode>> q = new PriorityQueue<>(Comparator.comparing(Tuple::second));
         Map<SensorNode, SensorNode> backPointers = new HashMap<>();
-        q.offer(Tuple.of(start, 0, null));
+        q.offer(Tuple.of(start, 0L, null));
 
-        Tuple<SensorNode, Integer, SensorNode> currPair;
+        Tuple<SensorNode, Long, SensorNode> currPair;
         SensorNode curr;
         SensorNode prev;
-        int value;
+        long value;
         while (!q.isEmpty()) {
             currPair = q.poll();
             curr = currPair.first();
@@ -746,8 +746,8 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int calculateProfitOf(DataNode from, StorageNode to) {
-        int cost = this.calculateMinCost(from, to);
+    public long calculateProfitOf(DataNode from, StorageNode to) {
+        long cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
     }
 

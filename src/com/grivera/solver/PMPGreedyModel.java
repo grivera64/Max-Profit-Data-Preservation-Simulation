@@ -11,8 +11,8 @@ import java.util.*;
 public class PMPGreedyModel extends AbstractModel {
 
     private final Map<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> routes = new HashMap<>();
-    private int totalCost;
-    private int totalProfit;
+    private long totalCost;
+    private long totalProfit;
 
     public PMPGreedyModel(Network network) {
         super(network);
@@ -39,12 +39,12 @@ public class PMPGreedyModel extends AbstractModel {
 
         Network network = this.getNetwork();
         StorageNode chosenSn;
-        int chosenProfit = Integer.MIN_VALUE;
+        long chosenProfit = Long.MIN_VALUE;
         int packetsToSend;
-        int cost;
+        long cost;
 
         network.resetPackets();
-        int currProfit;
+        long currProfit;
         int currPacketsToSend;
         boolean foundBetterProfit;
         for (DataNode dn : network.getDataNodes()) {
@@ -94,14 +94,14 @@ public class PMPGreedyModel extends AbstractModel {
     }
 
     @Override
-    public int getTotalCost() {
+    public long getTotalCost() {
         super.getTotalCost();
 
         return this.totalCost;
     }
 
     @Override
-    public int getTotalProfit() {
+    public long getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
     }
