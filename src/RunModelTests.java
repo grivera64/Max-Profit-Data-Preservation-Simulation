@@ -60,7 +60,14 @@ public class RunModelTests {
             episodes = Integer.parseInt(episodesString);
         }
         System.out.println();
-        
+
+        System.out.print("Print out route? ([Y]es/[N]o)\n(Yes) > ");
+        String printRoute = keyboard.nextLine();
+        boolean showRoute = true;
+        if (printRoute.contains("no") || printRoute.contains("No") || printRoute.equalsIgnoreCase("n")) {
+            showRoute = false;
+        }
+        System.out.println();
 
         System.out.println("Running models...");
         System.out.println("=================");
@@ -71,8 +78,10 @@ public class RunModelTests {
         System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
         System.out.println();
-        model.printRoute();
-        System.out.println();
+        if (showRoute) {
+            model.printRoute();
+            System.out.println();
+        }
 
         try {
             System.out.println("Profit Aware CS2 (PMPCs2Model):");
@@ -81,11 +90,13 @@ public class RunModelTests {
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.println();
-            model.printRoute();
+            if (showRoute) {
+                model.printRoute();
+                System.out.println();
+            }
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
-        } finally {
             System.out.println();
         }
 
@@ -94,24 +105,28 @@ public class RunModelTests {
             model = new Cs2Model(network, cs2Location);
             model.run();
             System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
-            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
             System.out.println();
-            model.printRoute();
+            if (showRoute) {
+                model.printRoute();
+                System.out.println();
+            }
         } catch (IllegalArgumentException e) {
             System.out.printf("WARNING: %s\n", e.getMessage());
             System.out.println("Skipping Cs2Model...");
-        } finally {
             System.out.println();
         }
 
-        System.out.printf("MARL (%d episodes):\n", episodes);
+        System.out.printf("MARL (%,d episodes):\n", episodes);
         model = new PMPMarlModel(network);
         model.run(episodes);
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
         System.out.println();
-        model.printRoute();
-        System.out.println();
+        if (showRoute) {
+            model.printRoute();
+            System.out.println();
+        }
     }
 
     public static Network readNetwork() {
