@@ -507,16 +507,18 @@ public class SensorNetwork implements Network {
      * {@inheritDoc}
      */
     @Override
-    public void saveAsCsInp(String fileName) {
+    public void saveAsPMPCsInp(String fileName) {
         final int supply = this.dataPacketCount * this.getDataNodeCount();
         final int demand = -supply;
 
-        final int totalNodes = this.getDataNodeCount() + this.getStorageNodeCount() + 3;
-        final int totalEdges = this.getEdgeCount();
+        final int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final int totalNodes = nonTransitionNodeCount + 3;
+        final int totalEdges = this.getPMPCs2EdgeCount();
 
         File file = new File(fileName);
         try (PrintWriter writer = new PrintWriter(file)) {
             /* Header */
+            writer.println("c For use with PMPCs2Model");
             writer.printf("c Min-Cost flow problem with %d nodes and %d arcs (edges)\n", totalNodes, totalEdges);
             writer.printf("p min %d %d\n", totalNodes, totalEdges);
             writer.println();
@@ -533,8 +535,10 @@ public class SensorNetwork implements Network {
             /* Arcs */
             writer.println("c arc list follows");
             writer.println("c arc has <tail> <head> <capacity l.b.> <capacity u.b> <cost>");
+            writer.println();
 
             /* Path from Source to DN is always 0 cost (not represented in the network) */
+            writer.println("c Source to DNs");
             for (DataNode dn : this.dNodes) {
                 writer.printf("c Source -> %s\n", dn.getName());
                 writer.printf("a %d %d %d %d %d\n", 0, dn.getId(), 0, this.dataPacketCount, 0);
@@ -542,6 +546,7 @@ public class SensorNetwork implements Network {
             writer.println();
 
             /* Find all paths from DN# -> SN#, Dummy */
+            writer.println("c DNs to SNs (and DN -> Dummy)");
             int profit;
             for (DataNode dn : this.dNodes) {
                 for (StorageNode sn : this.sNodes) {
@@ -559,12 +564,82 @@ public class SensorNetwork implements Network {
             /* Path from SN, Dummy -> Sink is always 0 cost (not represented in the network) */
             writer.println("c SNs to Sink");
             for (SensorNode sn : this.sNodes) {
+                writer.printf("c %s -> Sink\n", sn.getName());
                 writer.printf("a %d %d %d %d %d\n",
                         sn.getId() + this.getDataNodeCount(), totalNodes - 1, 0, this.storageCapacity, 0);
             }
+            writer.println();
+
             writer.println("c Dummy to Sink");
             writer.printf("a %d %d %d %d %d\n", totalNodes - 2, totalNodes - 1, 0, supply, 0);
 
+            System.out.printf("Saved flow network in file \"%s\"!\n", fileName);
+        } catch (IOException e) {
+            System.out.printf("ERROR: Failed to create %s\n", fileName);
+        }
+    }
+
+    @Override
+    public void saveAsCsInp(String fileName) {
+        final int supply = this.dataPacketCount * this.getDataNodeCount();
+        final int demand = -supply;
+        final int minFlow = 0;
+        final int maxFlow = this.dataPacketCount;
+
+        final int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final int totalNodes = nonTransitionNodeCount + 2;
+        final int totalEdges = this.getCs2EdgeCount();
+
+        File file = new File(fileName);
+        try (PrintWriter writer = new PrintWriter(file)) {
+            /* Header */
+            writer.println("c For use with Cs2Model");
+            writer.printf("c Min-Cost flow problem with %d nodes and %d arcs (edges)\n",
+                    totalNodes, totalEdges);
+            writer.printf("p min %d %d\n", totalNodes, totalEdges);
+            writer.println();
+
+            /* Set s (source) and t (sink) nodes */
+            writer.printf("c Supply of %d at node %d (\"Source\")\n", supply, 0);
+            writer.printf("n %d %d\n", 0, supply);
+            writer.println();
+
+            writer.printf("c Demand of %d at node %d (\"Sink\")\n", demand, this.nodes.size() + 1);
+            writer.printf("n %d %d\n", nonTransitionNodeCount + 1, demand);
+            writer.println();
+
+            /* Arcs */
+            writer.println("c arc list follows");
+            writer.println("c arc has <tail> <head> <capacity l.b.> <capacity u.b> <cost>");
+            writer.println();
+
+            /* Path from Source to DN is always 0 cost (not represented in the network) */
+            for (SensorNode dn : this.dNodes) {
+                writer.printf("c Source -> %s\n", dn.getName());
+                writer.printf("a %d %d %d %d %d\n", 0, dn.getId(), minFlow, maxFlow, 0);
+            }
+            writer.println();
+
+            /* Find all paths from DN#->SN# */
+            writer.println("c DNs to SNs");
+            int currCost;
+            for (SensorNode dn : this.dNodes) {
+                for (SensorNode sn : this.sNodes) {
+                    writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
+                    currCost = this.calculateMinCost(dn, sn);
+                    writer.printf("a %d %d %d %d %d\n",
+                            dn.getId(), this.getDataNodeCount() + sn.getId(), minFlow, maxFlow, currCost);
+                }
+                writer.println();
+            }
+
+            /* Path from SN to Sink is always 0 cost (not represented in the network) */
+            writer.println("c SNs to Sink");
+            for (SensorNode sn : this.sNodes) {
+                writer.printf("c %s -> Sink\n", sn.getName());
+                writer.printf("a %d %d %d %d %d\n",
+                        this.getDataNodeCount() + sn.getId(), nonTransitionNodeCount + 1, minFlow, this.storageCapacity, 0);
+            }
             System.out.printf("Saved flow network in file \"%s\"!\n", fileName);
         } catch (IOException e) {
             System.out.printf("ERROR: Failed to create %s\n", fileName);
@@ -612,8 +687,17 @@ public class SensorNetwork implements Network {
         return from.calculateTransmissionCost(to) + to.calculateReceivingCost();
     }
 
-    private int getEdgeCount() {
-        return this.dNodes.size() + ((this.sNodes.size() + 1) * this.dNodes.size()) + (this.sNodes.size() + 1);
+    private int getPMPCs2EdgeCount() {
+        int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        // source->DN + SN->sink + Dummy->sink                 DN->SN + DN->dummy
+        return (nonTransitionNodeCount + 1) + (this.getDataNodeCount() * (this.getStorageNodeCount() + 1));
+    }
+
+    private int getCs2EdgeCount() {
+        int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+
+        //     source->DN + SN->sink                            DN->SN
+        return nonTransitionNodeCount + (this.getDataNodeCount() * this.getStorageNodeCount());
     }
 
     public void setOverflowPackets(int overflowPackets) {

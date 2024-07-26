@@ -1,8 +1,8 @@
 package com.grivera.solver;
 
 import com.grivera.generator.Network;
-import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.SensorNode;
+import com.grivera.generator.sensors.DataNode;
 import com.grivera.generator.sensors.StorageNode;
 import com.grivera.util.Tuple;
 
@@ -15,33 +15,33 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 
-public class PMPCs2Model extends AbstractModel {
+public class Cs2Model extends AbstractModel {
 
     private final String cs2Location;
-    private int totalProfit;
+    private int totalCost;
     private List<Tuple<DataNode, StorageNode, Integer>> flows;
 
-    public PMPCs2Model(Network network) {
+    public Cs2Model(Network network) {
         this(network, ".");
     }
-    public PMPCs2Model(Network network, String cs2Location) {
+    public Cs2Model(Network network, String cs2Location) {
         super(network);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public PMPCs2Model(String fileName) {
+    public Cs2Model(String fileName) {
         this(fileName, ".");
     }
 
     /* Note, this isn't thread safe */
-    public PMPCs2Model(String fileName, String cs2Location) {
+    public Cs2Model(String fileName, String cs2Location) {
         super(fileName);
         this.cs2Location = cs2Location;
         this.verifyCs2();
     }
 
-    public PMPCs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
+    public Cs2Model(String fileName, String cs2Location, int overflowPackets, int storageCapacity) {
         super(fileName, overflowPackets, storageCapacity);
         this.cs2Location = cs2Location;
         this.verifyCs2();
@@ -69,7 +69,7 @@ public class PMPCs2Model extends AbstractModel {
         String tmpInpName = String.format("%s.inp", baseFileName);
 
         Network network = this.getNetwork();
-        network.saveAsPMPCsInp(tmpInpName);
+        network.saveAsCsInp(tmpInpName);
 
         String cs2FullPath = new File(this.cs2Location).getAbsolutePath();
         Path tmpTxt;
@@ -128,7 +128,7 @@ public class PMPCs2Model extends AbstractModel {
 
                 switch (lineSplit[0].charAt(0)) {
                     case 's':
-                        this.totalProfit = -Integer.parseInt(lineSplit[1]);
+                        this.totalCost = Integer.parseInt(lineSplit[1]);
                         break;
                     case 'f':
                         srcId = Integer.parseInt(lineSplit[1]);
@@ -158,7 +158,13 @@ public class PMPCs2Model extends AbstractModel {
 
     @Override
     public int getTotalProfit() {
-        return this.totalProfit;
+        int totalProfit = 0;
+
+        Network network = this.getNetwork();
+        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
+            totalProfit += network.calculateProfitOf(tuple.first(), tuple.second()) * tuple.third();
+        }
+        return totalProfit;
     }
 
     @Override
@@ -180,13 +186,7 @@ public class PMPCs2Model extends AbstractModel {
 
     @Override
     public int getTotalCost() {
-        int totalCost = 0;
-
-        Network network = this.getNetwork();
-        for (Tuple<DataNode, StorageNode, Integer> tuple : this.flows) {
-            totalCost += network.calculateMinCost(tuple.first(), tuple.second()) * tuple.third();
-        }
-        return totalCost;
+        return this.totalCost;
     }
 
     private String getDateString() {

@@ -84,6 +84,15 @@ public interface Network {
      *
      * @param fileName the path to the file to save to
      */
+    void saveAsPMPCsInp(String fileName);
+    
+    /**
+     * Saves the network in the <b>DIMAC</b> format
+     * that can be used for the min-cost flow program
+     * <a href="https://github.com/iveney/cs2">CS2</a>.
+     *
+     * @param fileName the path to the file to save to
+     */
     void saveAsCsInp(String fileName);
     void setOverflowPackets(int overflowPackets);
     void setStorageCapacity(int storageCapacity);
