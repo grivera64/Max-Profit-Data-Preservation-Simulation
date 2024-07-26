@@ -7,7 +7,7 @@ public abstract class SensorNode {
 
     private static int uuidCounter = 1;
 
-    protected static int BITS_PER_PACKET = 3200;
+    protected static int BITS_PER_PACKET = 4_096;
     protected static final double E_elec = 100e-9;
     protected static final double E_amp = 100e-12;
 
