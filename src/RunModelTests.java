@@ -5,6 +5,7 @@ import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 import com.grivera.solver.PMPMarlModel;
+import com.grivera.util.Converter;
 
 import java.util.Scanner;
 
@@ -75,8 +76,8 @@ public class RunModelTests {
         Model model = new PMPGreedyModel(network);
         model.run();
         System.out.println("Greedy:");
-        System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+        System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
         System.out.println();
         if (showRoute) {
             model.printRoute();
@@ -87,8 +88,8 @@ public class RunModelTests {
             System.out.println("Profit Aware CS2 (PMPCs2Model):");
             model = new PMPCs2Model(network, cs2Location);
             model.run();
-            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
-            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+            System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
             System.out.println();
             if (showRoute) {
                 model.printRoute();
@@ -104,8 +105,8 @@ public class RunModelTests {
             System.out.println("Profit Oblivious CS2 (Cs2Model):");
             model = new Cs2Model(network, cs2Location);
             model.run();
-            System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
-            System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+            System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
             System.out.println();
             if (showRoute) {
                 model.printRoute();
@@ -120,8 +121,8 @@ public class RunModelTests {
         System.out.printf("MARL (%,d episodes):\n", episodes);
         model = new PMPMarlModel(network);
         model.run(episodes);
-        System.out.printf("Cost: %,d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %,d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+        System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
         System.out.println();
         if (showRoute) {
             model.printRoute();
