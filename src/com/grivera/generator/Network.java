@@ -16,9 +16,9 @@ public interface Network {
     double getWidth();
     double getLength();
 
-    int getDataPacketCount();
+    long getDataPacketCount();
 
-    int getStorageCapacity();
+    long getStorageCapacity();
 
     List<SensorNode> getSensorNodes();
     int getSensorNodeCount();
@@ -94,13 +94,13 @@ public interface Network {
      * @param fileName the path to the file to save to
      */
     void saveAsCsInp(String fileName);
-    void setOverflowPackets(int overflowPackets);
-    void setStorageCapacity(int storageCapacity);
-    boolean canSendPackets(DataNode dn, StorageNode sn, int packets);
-    void sendPackets(DataNode dn, StorageNode sn, int packets);
+    void setOverflowPackets(long overflowPackets);
+    void setStorageCapacity(long storageCapacity);
+    boolean canSendPackets(DataNode dn, StorageNode sn, long packets);
+    void sendPackets(DataNode dn, StorageNode sn, long packets);
     void resetPackets();
     long calculateProfitOf(DataNode from, StorageNode to);
-    SensorNode getSensorNodeByUuid(int uuid);
+    SensorNode getSensorNodeByUuid(long uuid);
     DataNode getDataNodeById(int id);
     StorageNode getStorageNodeById(int id);
     TransitionNode getTransitionNodeById(int id);

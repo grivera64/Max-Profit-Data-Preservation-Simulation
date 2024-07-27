@@ -141,7 +141,7 @@ public class PMPCs2Model extends AbstractModel {
                         tmpSrc = network.getDataNodeById(srcId);
                         tmpDst = network.getStorageNodeById(dstId - network.getDataNodeCount());
 
-                        tmpFlow = Integer.parseInt(lineSplit[3]);
+                        tmpFlow = Long.parseLong(lineSplit[3]);
                         this.flows.add(Tuple.of(tmpSrc, tmpDst, tmpFlow));
                         break;
                     case 'c':
@@ -180,7 +180,7 @@ public class PMPCs2Model extends AbstractModel {
 
     @Override
     public long getTotalCost() {
-        int totalCost = 0;
+        long totalCost = 0;
 
         Network network = this.getNetwork();
         for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {

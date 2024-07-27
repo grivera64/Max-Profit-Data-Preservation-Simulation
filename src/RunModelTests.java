@@ -177,14 +177,14 @@ public class RunModelTests {
         int storageCount = keyboard.nextInt();
         keyboard.nextLine();
 
-        System.out.println("Please enter the min value (Vl) that any data packet can have:");
+        System.out.println("Please enter the min value (Vl) in cents that any data packet can have:");
         System.out.print("Vl = ");
-        int lowestValue = keyboard.nextInt();
+        long lowestValue = (long) Converter.centsToMicroJoules(keyboard.nextDouble());
         keyboard.nextLine();
 
-        System.out.println("Please enter the max value (Vh) that any data packet can have:");
+        System.out.println("Please enter the max value (Vh) in cents that any data packet can have:");
         System.out.print("Vh = ");
-        int highestValue = keyboard.nextInt();
+        long highestValue = (long) Converter.centsToMicroJoules(keyboard.nextDouble());
         keyboard.nextLine();
 
         return SensorNetwork.of(

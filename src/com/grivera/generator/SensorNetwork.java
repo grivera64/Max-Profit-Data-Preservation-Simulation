@@ -29,8 +29,8 @@ public class SensorNetwork implements Network {
     private final Map<Pair<SensorNode, SensorNode>, Long> costMap = new HashMap<>();
 
     private final double width, length;
-    private int dataPacketCount;
-    private int storageCapacity;
+    private long dataPacketCount;
+    private long storageCapacity;
     private final double transmissionRange;
 
     /**
@@ -47,7 +47,7 @@ public class SensorNetwork implements Network {
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public SensorNetwork(double x, double y, int N, double tr, int p, long q, int s, long m, long Vl, long Vh) {
         this.width = x;
         this.length = y;
         this.dataPacketCount = q;
@@ -108,8 +108,8 @@ public class SensorNetwork implements Network {
             fileScanner.nextLine();
             lineNumber++;
 
-            this.dataPacketCount = fileScanner.nextInt();
-            this.storageCapacity = fileScanner.nextInt();
+            this.dataPacketCount = fileScanner.nextLong();
+            this.storageCapacity = fileScanner.nextLong();
             fileScanner.nextLine();
             lineNumber++;
 
@@ -143,7 +143,7 @@ public class SensorNetwork implements Network {
                 // Requires JDK 12+
                 node = switch (lineArgs[0]) {
                     case "d" ->
-                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
+                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Long.parseLong(lineArgs[3]));
                     case "s" ->
                             new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
                     case "t" ->
@@ -182,7 +182,7 @@ public class SensorNetwork implements Network {
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public static SensorNetwork of(double x, double y, int N, double tr, int p, long q, int s, long m, long Vl, long Vh) {
         SensorNetwork network;
         int attempts = 0;
         do {
@@ -269,7 +269,7 @@ public class SensorNetwork implements Network {
         return sn;
     }
 
-    private List<SensorNode> initNodes(int nodeCount, int p, int s, int Vl, int Vh) {
+    private List<SensorNode> initNodes(int nodeCount, int p, int s, long Vl, long Vh) {
         List<SensorNode> nodes = new ArrayList<>(nodeCount);
         Random rand = new Random();
 
@@ -283,13 +283,13 @@ public class SensorNetwork implements Network {
         int choice;
         double x, y;
         SensorNode tmp;
-        int tmpVal;
+        long tmpVal;
         for (int index = 0; index < nodeCount; index++) {
             choice = rand.nextInt(1, 11);
             x = this.width * rand.nextDouble();
             y = this.length * rand.nextDouble();
 
-            tmpVal = rand.nextInt(Vh - Vl + 1) + Vl;
+            tmpVal = rand.nextLong(Vh - Vl + 1) + Vl;
 
             if ((choice < 4 && p > 0) || nodeCount - index <= p) {
                 tmp = new DataNode(x, y, this.transmissionRange, this.dataPacketCount, tmpVal);
@@ -342,7 +342,7 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int getDataPacketCount() {
+    public long getDataPacketCount() {
         return dataPacketCount;
     }
 
@@ -351,7 +351,7 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int getStorageCapacity() {
+    public long getStorageCapacity() {
         return storageCapacity;
     }
 
@@ -508,12 +508,12 @@ public class SensorNetwork implements Network {
      */
     @Override
     public void saveAsPMPCsInp(String fileName) {
-        final int supply = this.dataPacketCount * this.getDataNodeCount();
-        final int demand = -supply;
+        final long supply = this.dataPacketCount * this.getDataNodeCount();
+        final long demand = -supply;
 
-        final int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
-        final int totalNodes = nonTransitionNodeCount + 3;
-        final int totalEdges = this.getPMPCs2EdgeCount();
+        final long nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final long totalNodes = nonTransitionNodeCount + 3;
+        final long totalEdges = this.getPMPCs2EdgeCount();
 
         File file = new File(fileName);
         try (PrintWriter writer = new PrintWriter(file)) {
@@ -581,14 +581,14 @@ public class SensorNetwork implements Network {
 
     @Override
     public void saveAsCsInp(String fileName) {
-        final int supply = this.dataPacketCount * this.getDataNodeCount();
-        final int demand = -supply;
-        final int minFlow = 0;
-        final int maxFlow = this.dataPacketCount;
+        final long supply = this.dataPacketCount * this.getDataNodeCount();
+        final long demand = -supply;
+        final long minFlow = 0;
+        final long maxFlow = this.dataPacketCount;
 
-        final int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
-        final int totalNodes = nonTransitionNodeCount + 2;
-        final int totalEdges = this.getCs2EdgeCount();
+        final long nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final long totalNodes = nonTransitionNodeCount + 2;
+        final long totalEdges = this.getCs2EdgeCount();
 
         File file = new File(fileName);
         try (PrintWriter writer = new PrintWriter(file)) {
@@ -700,7 +700,7 @@ public class SensorNetwork implements Network {
         return nonTransitionNodeCount + (this.getDataNodeCount() * this.getStorageNodeCount());
     }
 
-    public void setOverflowPackets(int overflowPackets) {
+    public void setOverflowPackets(long overflowPackets) {
         this.dataPacketCount = overflowPackets;
 
         for (DataNode dn : this.dNodes) {
@@ -708,7 +708,7 @@ public class SensorNetwork implements Network {
         }
     }
 
-    public void setStorageCapacity(int storageCapacity) {
+    public void setStorageCapacity(long storageCapacity) {
         this.storageCapacity = storageCapacity;
 
         for (StorageNode sn : this.sNodes) {
@@ -717,12 +717,12 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public boolean canSendPackets(DataNode dn, StorageNode sn, int packets) {
+    public boolean canSendPackets(DataNode dn, StorageNode sn, long packets) {
         return dn.canRemovePackets(packets) && sn.canStore(packets);
     }
 
     @Override
-    public void sendPackets(DataNode dn, StorageNode sn, int packets) {
+    public void sendPackets(DataNode dn, StorageNode sn, long packets) {
         if (!this.canSendPackets(dn, sn, packets)) {
             throw new IllegalArgumentException(
                     String.format("Cannot send from %s (%d/%d packets left) -> %s (%d/%d space left)\n",
@@ -751,8 +751,8 @@ public class SensorNetwork implements Network {
         return from.getOverflowPacketValue() - cost;
     }
 
-    public SensorNode getSensorNodeByUuid(int uuid) {
-        return this.nodes.get(uuid - 1);
+    public SensorNode getSensorNodeByUuid(long uuid) {
+        return this.nodes.get((int) uuid - 1);
     }
 
     @Override

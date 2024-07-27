@@ -27,7 +27,7 @@ public class PMPMarlModel extends AbstractModel {
     private static final int w = 10000;
     private static final double storageReward = 1000;
     private static final double nonStorageReward = 1;
-    private int storageCapacity;
+    private long storageCapacity;
     private long totalCost;
     private long totalProfit;
     private NetState finalState;
@@ -211,7 +211,7 @@ public class PMPMarlModel extends AbstractModel {
 
     private void moveAgentsToState(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             double reward = agent.getRewardCol();
             int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
             int receiveCost = agent.getNextLocation().calculateReceivingCost();
@@ -230,7 +230,7 @@ public class PMPMarlModel extends AbstractModel {
 
     private void moveAgentsToStateExecution(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
             int receiveCost = agent.getNextLocation().calculateReceivingCost();
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
@@ -506,7 +506,7 @@ public class PMPMarlModel extends AbstractModel {
     private String encodeStateList(List<SensorNode> list) {
         StringJoiner sj = new StringJoiner("-");
         for (SensorNode sensorNode : list) {
-            sj.add(Integer.toString(sensorNode.getUuid()));
+            sj.add(Long.toString(sensorNode.getUuid()));
         }
         return sj.toString();
     }

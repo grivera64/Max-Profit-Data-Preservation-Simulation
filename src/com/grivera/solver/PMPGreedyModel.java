@@ -10,7 +10,7 @@ import java.util.*;
 
 public class PMPGreedyModel extends AbstractModel {
 
-    private final Map<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> routes = new HashMap<>();
+    private final Map<SensorNode, List<Tuple<StorageNode, Long, List<SensorNode>>>> routes = new HashMap<>();
     private long totalCost;
     private long totalProfit;
 
@@ -40,12 +40,12 @@ public class PMPGreedyModel extends AbstractModel {
         Network network = this.getNetwork();
         StorageNode chosenSn;
         long chosenProfit = Long.MIN_VALUE;
-        int packetsToSend;
+        long packetsToSend;
         long cost;
 
         network.resetPackets();
         long currProfit;
-        int currPacketsToSend;
+        long currPacketsToSend;
         boolean foundBetterProfit;
         for (DataNode dn : network.getDataNodes()) {
             while (!dn.isEmpty()) {
@@ -110,8 +110,8 @@ public class PMPGreedyModel extends AbstractModel {
     public void printRoute() {
         StringJoiner str;
 
-        for (Map.Entry<SensorNode, List<Tuple<StorageNode, Integer, List<SensorNode>>>> entry : this.routes.entrySet()) {
-            for (Tuple<StorageNode, Integer, List<SensorNode>> route : entry.getValue()) {
+        for (Map.Entry<SensorNode, List<Tuple<StorageNode, Long, List<SensorNode>>>> entry : this.routes.entrySet()) {
+            for (Tuple<StorageNode, Long, List<SensorNode>> route : entry.getValue()) {
                 str = new StringJoiner(" -> ", "[", "]");
                 System.out.printf("%s -> %s (flow = %d)\n", entry.getKey().getName(), route.first().getName(), route.second());
                 for (SensorNode node : route.third()) {

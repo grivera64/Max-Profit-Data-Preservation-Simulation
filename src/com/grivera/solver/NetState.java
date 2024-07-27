@@ -64,7 +64,7 @@ public class NetState {
         // represent state as a string
         StringJoiner state = new StringJoiner("-");
         for (Agent agent : this.agents) {
-            state.add(Integer.toString(agent.getCurrentLocation().getUuid()));
+            state.add(Long.toString(agent.getCurrentLocation().getUuid()));
         }
         return state.toString();
     }
@@ -88,7 +88,7 @@ public class NetState {
         // represent state as a string
         StringJoiner state = new StringJoiner("-");
         for (Agent agent : this.agents) {
-            state.add(Integer.toString(agent.getNextLocation().getUuid()));
+            state.add(Long.toString(agent.getNextLocation().getUuid()));
         }
         return state.toString();
     }
