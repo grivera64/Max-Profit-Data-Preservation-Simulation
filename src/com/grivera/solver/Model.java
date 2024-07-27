@@ -5,5 +5,6 @@ public interface Model {
     void run(int episodes);
     long getTotalCost();
     long getTotalProfit();
+    long getTotalValue();
     void printRoute();
 }

@@ -158,6 +158,8 @@ public class Cs2Model extends AbstractModel {
 
     @Override
     public long getTotalProfit() {
+        super.getTotalProfit();
+
         long totalProfit = 0;
 
         Network network = this.getNetwork();
@@ -169,6 +171,7 @@ public class Cs2Model extends AbstractModel {
 
     @Override
     public void printRoute() {
+        super.printRoute();
         StringJoiner str;
         Network network = this.getNetwork();
         for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
@@ -186,7 +189,21 @@ public class Cs2Model extends AbstractModel {
 
     @Override
     public long getTotalCost() {
+        super.getTotalCost();
         return this.totalCost;
+    }
+
+    @Override
+    public long getTotalValue() {
+        super.getTotalValue();
+
+        long totalValue = 0;
+
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
+            totalValue += tuple.first().getOverflowPacketValue() * tuple.third();
+        }
+
+        return totalValue;
     }
 
     private String getDateString() {

@@ -30,6 +30,7 @@ public class PMPMarlModel extends AbstractModel {
     private long storageCapacity;
     private long totalCost;
     private long totalProfit;
+    private long totalValue;
     private NetState finalState;
 
     public PMPMarlModel(Network network) {
@@ -202,6 +203,8 @@ public class PMPMarlModel extends AbstractModel {
             costOfRoute += agent.calculateCostOfPath();
             profitOfRoute += agent.getPacketValue();
         }
+
+        this.totalValue = profitOfRoute;
         profitOfRoute -= costOfRoute;
 
         this.totalCost = costOfRoute;
@@ -593,5 +596,10 @@ public class PMPMarlModel extends AbstractModel {
     public long getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
+    }
+
+    public long getTotalValue() {
+        super.getTotalValue();
+        return this.totalValue;
     }
 }

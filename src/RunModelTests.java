@@ -78,6 +78,7 @@ public class RunModelTests {
         System.out.println("Greedy:");
         System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
         System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+        System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
         if (showRoute) {
             model.printRoute();
@@ -90,6 +91,7 @@ public class RunModelTests {
             model.run();
             System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
             System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+            System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
             System.out.println();
             if (showRoute) {
                 model.printRoute();
@@ -107,6 +109,7 @@ public class RunModelTests {
             model.run();
             System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
             System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+            System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
             System.out.println();
             if (showRoute) {
                 model.printRoute();
@@ -123,6 +126,7 @@ public class RunModelTests {
         model.run(episodes);
         System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
         System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+        System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
         if (showRoute) {
             model.printRoute();

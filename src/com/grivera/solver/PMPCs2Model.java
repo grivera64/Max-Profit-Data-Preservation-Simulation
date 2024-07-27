@@ -163,6 +163,7 @@ public class PMPCs2Model extends AbstractModel {
 
     @Override
     public void printRoute() {
+        super.printRoute();
         StringJoiner str;
         Network network = this.getNetwork();
         for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
@@ -180,6 +181,8 @@ public class PMPCs2Model extends AbstractModel {
 
     @Override
     public long getTotalCost() {
+        super.getTotalCost();
+
         long totalCost = 0;
 
         Network network = this.getNetwork();
@@ -187,6 +190,19 @@ public class PMPCs2Model extends AbstractModel {
             totalCost += network.calculateMinCost(tuple.first(), tuple.second()) * tuple.third();
         }
         return totalCost;
+    }
+
+    @Override
+    public long getTotalValue() {
+        super.getTotalValue();
+
+        long totalValue = 0;
+
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
+            totalValue += tuple.first().getOverflowPacketValue() * tuple.third();
+        }
+
+        return totalValue;
     }
 
     private String getDateString() {
