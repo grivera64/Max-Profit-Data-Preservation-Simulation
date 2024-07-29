@@ -16,9 +16,9 @@ public interface Network {
     double getWidth();
     double getLength();
 
-    int getDataPacketCount();
+    long getDataPacketCount();
 
-    int getStorageCapacity();
+    long getStorageCapacity();
 
     List<SensorNode> getSensorNodes();
     int getSensorNodeCount();
@@ -49,7 +49,7 @@ public interface Network {
      */
     boolean isFeasible();
     Map<SensorNode, Set<SensorNode>> getAdjacencyList();    // Returns the connection of nodes (using ID)
-    int calculateMinCost(SensorNode from, SensorNode to);
+    long calculateMinCost(SensorNode from, SensorNode to);
 
     /**
      * Returns the sensor nodes in the min-cost path between the from and to sensor
@@ -68,7 +68,7 @@ public interface Network {
      * @param path the path between two sensor nodes
      * @return the cost of the given path
      */
-    int calculateCostOfPath(List<SensorNode> path);
+    long calculateCostOfPath(List<SensorNode> path);
 
     /**
      * Saves the network into a .sn file format.
@@ -84,14 +84,23 @@ public interface Network {
      *
      * @param fileName the path to the file to save to
      */
+    void saveAsPMPCsInp(String fileName);
+    
+    /**
+     * Saves the network in the <b>DIMAC</b> format
+     * that can be used for the min-cost flow program
+     * <a href="https://github.com/iveney/cs2">CS2</a>.
+     *
+     * @param fileName the path to the file to save to
+     */
     void saveAsCsInp(String fileName);
-    void setOverflowPackets(int overflowPackets);
-    void setStorageCapacity(int storageCapacity);
-    boolean canSendPackets(DataNode dn, StorageNode sn, int packets);
-    void sendPackets(DataNode dn, StorageNode sn, int packets);
+    void setOverflowPackets(long overflowPackets);
+    void setStorageCapacity(long storageCapacity);
+    boolean canSendPackets(DataNode dn, StorageNode sn, long packets);
+    void sendPackets(DataNode dn, StorageNode sn, long packets);
     void resetPackets();
-    int calculateProfitOf(DataNode from, StorageNode to);
-    SensorNode getSensorNodeByUuid(int uuid);
+    long calculateProfitOf(DataNode from, StorageNode to);
+    SensorNode getSensorNodeByUuid(long uuid);
     DataNode getDataNodeById(int id);
     StorageNode getStorageNodeById(int id);
     TransitionNode getTransitionNodeById(int id);

@@ -59,12 +59,12 @@ cd src
 
 Windows:
 ```batch
-javac -cp ".;%PATH_TO_GUAVA%/*" -p . *.java -d ../bin
+javac -cp ".;%PATH_TO_OR_TOOLS%/*;%PATH_TO_GUAVA%/*" -p . *.java -d ../bin
 ```
 
 Mac/Linux:
 ```sh
-javac -cp ".:${PATH_TO_GUAVA}/*" -p . *.java -d ../bin
+javac -cp ".:$PATH_TO_OR_TOOLS/*:$PATH_TO_GUAVA/*" *.java -d ../bin
 ```
 
 ### 4. Change directories into the binaries folder
@@ -78,12 +78,12 @@ cd bin
 
 Windows:
 ```batch
-java -cp ".;%PATH_TO_GUAVA%/*" -p . RunModelTests
+java -cp ".;%PATH_TO_OR_TOOLS%/*;%PATH_TO_GUAVA%/*" RunModelTests
 ```
 
 Mac/Linux:
 ```sh
-java -cp ".:${PATH_TO_GUAVA}/*" -p . RunModelTests
+java -cp ".:$PATH_TO_OR_TOOLS/*:$PATH_TO_GUAVA/*" RunModelTests
 ```
 
 ## Example

@@ -5,13 +5,13 @@ package com.grivera.generator.sensors;
  */
 public abstract class SensorNode {
 
-    private static int uuidCounter = 1;
+    private static long uuidCounter = 1;
 
     protected static int BITS_PER_PACKET = 4_096;
     protected static final double E_elec = 100e-9;
     protected static final double E_amp = 100e-12;
 
-    private int uuid;
+    private long uuid;
     private final double x, y, tr;
     private String name;
 
@@ -32,7 +32,7 @@ public abstract class SensorNode {
         return this.y;
     }
 
-    public int getUuid() {
+    public long getUuid() {
         return this.uuid;
     }
 
@@ -113,5 +113,5 @@ public abstract class SensorNode {
     }
 
     public abstract void resetPackets();
-    public abstract int getId();
+    public abstract long getId();
 }

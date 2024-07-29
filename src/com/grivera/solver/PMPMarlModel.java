@@ -27,9 +27,10 @@ public class PMPMarlModel extends AbstractModel {
     private static final int w = 10000;
     private static final double storageReward = 1000;
     private static final double nonStorageReward = 1;
-    private int storageCapacity;
-    private int totalCost;
-    private int totalProfit;
+    private long storageCapacity;
+    private long totalCost;
+    private long totalProfit;
+    private long totalValue;
     private NetState finalState;
 
     public PMPMarlModel(Network network) {
@@ -73,8 +74,8 @@ public class PMPMarlModel extends AbstractModel {
         episodes = epi;
         Network network = this.getNetwork();
 
-        int cost, reward, profit;
-        int max = Integer.MIN_VALUE; // line 0.
+        long cost, reward, profit;
+        long max = Long.MIN_VALUE; // line 0.
         // create state object with nodes and an agent for each packet
         NetState state = new NetState(network);
 
@@ -196,12 +197,14 @@ public class PMPMarlModel extends AbstractModel {
         }
         // return route, return Cost of Route, return profit of route
         // or just sys.out
-        int costOfRoute = 0;
-        int profitOfRoute = 0;
+        long costOfRoute = 0;
+        long profitOfRoute = 0;
         for (Agent agent : state.getAgents()) {
             costOfRoute += agent.calculateCostOfPath();
             profitOfRoute += agent.getPacketValue();
         }
+
+        this.totalValue = profitOfRoute;
         profitOfRoute -= costOfRoute;
 
         this.totalCost = costOfRoute;
@@ -211,7 +214,7 @@ public class PMPMarlModel extends AbstractModel {
 
     private void moveAgentsToState(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             double reward = agent.getRewardCol();
             int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
             int receiveCost = agent.getNextLocation().calculateReceivingCost();
@@ -230,7 +233,7 @@ public class PMPMarlModel extends AbstractModel {
 
     private void moveAgentsToStateExecution(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
             int receiveCost = agent.getNextLocation().calculateReceivingCost();
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
@@ -506,7 +509,7 @@ public class PMPMarlModel extends AbstractModel {
     private String encodeStateList(List<SensorNode> list) {
         StringJoiner sj = new StringJoiner("-");
         for (SensorNode sensorNode : list) {
-            sj.add(Integer.toString(sensorNode.getUuid()));
+            sj.add(Long.toString(sensorNode.getUuid()));
         }
         return sj.toString();
     }
@@ -585,13 +588,18 @@ public class PMPMarlModel extends AbstractModel {
         }
     }
 
-    public int getTotalCost() {
+    public long getTotalCost() {
         super.getTotalCost();
         return this.totalCost;
     }
 
-    public int getTotalProfit() {
+    public long getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
+    }
+
+    public long getTotalValue() {
+        super.getTotalValue();
+        return this.totalValue;
     }
 }

@@ -7,25 +7,25 @@ package com.grivera.generator.sensors;
  */
 public class DataNode extends SensorNode {
 
-    private static int idCounter = 1;
-    private int id;
-    private int overflowPackets;
-    private int overflowPacketsValue;
-    private int packetsLeft;
+    private static long idCounter = 1;
+    private long id;
+    private long overflowPackets;
+    private long overflowPacketsValue;
+    private long packetsLeft;
 
-    public DataNode(double x, double y, double tr, int overflowPackets, int overflowPacketsValue) {
+    public DataNode(double x, double y, double tr, long overflowPackets, long overflowPacketsValue) {
         super(x, y, tr, String.format("DN%02d", idCounter));
         this.id = idCounter++;
         this.setOverflowPackets(overflowPackets);
         this.overflowPacketsValue = overflowPacketsValue;
     }
 
-    public void setOverflowPackets(int overflowPackets) {
+    public void setOverflowPackets(long overflowPackets) {
         this.overflowPackets = overflowPackets;
         this.packetsLeft = overflowPackets;
     }
 
-    public int getOverflowPackets() {
+    public long getOverflowPackets() {
         return this.overflowPackets;
     }
 
@@ -33,11 +33,11 @@ public class DataNode extends SensorNode {
         return this.packetsLeft < 1;
     }
 
-    public boolean canRemovePackets(int deltaPackets) {
+    public boolean canRemovePackets(long deltaPackets) {
         return this.packetsLeft - deltaPackets >= 0;
     }
 
-    public void removePackets(int packets) {
+    public void removePackets(long packets) {
         if (!this.canRemovePackets(packets)) {
             throw new IllegalArgumentException(
                     String.format("%s cannot remove %d packets (%d/%d left)",
@@ -54,15 +54,15 @@ public class DataNode extends SensorNode {
     }
 
     @Override
-    public int getId() {
+    public long getId() {
         return this.id;
     }
 
-    public int getPacketsLeft() {
+    public long getPacketsLeft() {
         return this.packetsLeft;
     }
 
-    public int getOverflowPacketValue() {
+    public long getOverflowPacketValue() {
         return this.overflowPacketsValue;
     }
 

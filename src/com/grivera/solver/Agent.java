@@ -9,9 +9,9 @@ public class Agent {
     private SensorNode currLocation;
     private SensorNode originalLocation;
     private SensorNode lastStateLocation;
-    private int packetValue;
+    private long packetValue;
     private SensorNode nextLocation;
-    private int travelCost = 0;
+    private long travelCost = 0;
     private double rewardCol = 0;
     private boolean storedInStorage = false;
     private boolean storedInStorageNext = false;
@@ -56,11 +56,11 @@ public class Agent {
         route.add(0, originalLocation);
     }
 
-    public int getPacketValue() {
+    public long getPacketValue() {
         return packetValue;
     }
 
-    public void setPacketValue(int packetValue) {
+    public void setPacketValue(long packetValue) {
         this.packetValue = packetValue;
     }
 
@@ -80,11 +80,11 @@ public class Agent {
         this.storedInStorageNext = true;
     }
 
-    public int getTravelCost() {
+    public long getTravelCost() {
         return travelCost;
     }
 
-    public void setTravelCost(int travelCost) {
+    public void setTravelCost(long travelCost) {
         this.travelCost = travelCost;
     }
     public double getRewardCol() {

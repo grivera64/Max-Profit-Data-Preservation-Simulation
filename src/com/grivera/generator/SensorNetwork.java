@@ -26,11 +26,11 @@ public class SensorNetwork implements Network {
     private List<TransitionNode> tNodes;
     private Map<SensorNode, Set<SensorNode>> graph;
 
-    private final Map<Pair<SensorNode, SensorNode>, Integer> costMap = new HashMap<>();
+    private final Map<Pair<SensorNode, SensorNode>, Long> costMap = new HashMap<>();
 
     private final double width, length;
-    private int dataPacketCount;
-    private int storageCapacity;
+    private long dataPacketCount;
+    private long storageCapacity;
     private final double transmissionRange;
 
     /**
@@ -47,7 +47,7 @@ public class SensorNetwork implements Network {
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public SensorNetwork(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public SensorNetwork(double x, double y, int N, double tr, int p, long q, int s, long m, long Vl, long Vh) {
         this.width = x;
         this.length = y;
         this.dataPacketCount = q;
@@ -108,8 +108,8 @@ public class SensorNetwork implements Network {
             fileScanner.nextLine();
             lineNumber++;
 
-            this.dataPacketCount = fileScanner.nextInt();
-            this.storageCapacity = fileScanner.nextInt();
+            this.dataPacketCount = fileScanner.nextLong();
+            this.storageCapacity = fileScanner.nextLong();
             fileScanner.nextLine();
             lineNumber++;
 
@@ -143,7 +143,7 @@ public class SensorNetwork implements Network {
                 // Requires JDK 12+
                 node = switch (lineArgs[0]) {
                     case "d" ->
-                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Integer.parseInt(lineArgs[3]));
+                            new DataNode(x, y, this.transmissionRange, this.dataPacketCount, Long.parseLong(lineArgs[3]));
                     case "s" ->
                             new StorageNode(x, y, this.transmissionRange, this.storageCapacity);
                     case "t" ->
@@ -182,7 +182,7 @@ public class SensorNetwork implements Network {
      * @param Vl the minimum value of a data packet (inclusive)
      * @param Vh the maximum value of a data packet (inclusive)
      */
-    public static SensorNetwork of(double x, double y, int N, double tr, int p, int q, int s, int m, int Vl, int Vh) {
+    public static SensorNetwork of(double x, double y, int N, double tr, int p, long q, int s, long m, long Vl, long Vh) {
         SensorNetwork network;
         int attempts = 0;
         do {
@@ -269,7 +269,7 @@ public class SensorNetwork implements Network {
         return sn;
     }
 
-    private List<SensorNode> initNodes(int nodeCount, int p, int s, int Vl, int Vh) {
+    private List<SensorNode> initNodes(int nodeCount, int p, int s, long Vl, long Vh) {
         List<SensorNode> nodes = new ArrayList<>(nodeCount);
         Random rand = new Random();
 
@@ -283,13 +283,13 @@ public class SensorNetwork implements Network {
         int choice;
         double x, y;
         SensorNode tmp;
-        int tmpVal;
+        long tmpVal;
         for (int index = 0; index < nodeCount; index++) {
             choice = rand.nextInt(1, 11);
             x = this.width * rand.nextDouble();
             y = this.length * rand.nextDouble();
 
-            tmpVal = rand.nextInt(Vh - Vl + 1) + Vl;
+            tmpVal = rand.nextLong(Vh - Vl + 1) + Vl;
 
             if ((choice < 4 && p > 0) || nodeCount - index <= p) {
                 tmp = new DataNode(x, y, this.transmissionRange, this.dataPacketCount, tmpVal);
@@ -342,7 +342,7 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int getDataPacketCount() {
+    public long getDataPacketCount() {
         return dataPacketCount;
     }
 
@@ -351,7 +351,7 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int getStorageCapacity() {
+    public long getStorageCapacity() {
         return storageCapacity;
     }
 
@@ -418,13 +418,13 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int calculateMinCost(SensorNode from, SensorNode to) {
+    public long calculateMinCost(SensorNode from, SensorNode to) {
         Pair<SensorNode, SensorNode> pair = Pair.of(from, to);
         if (costMap.containsKey(pair)) {
             return costMap.get(pair);
         }
 
-        int cost = this.calculateCostOfPath(this.getMinCostPath(from, to));
+        long cost = this.calculateCostOfPath(this.getMinCostPath(from, to));
         costMap.put(pair, cost);
         return cost;
     }
@@ -441,8 +441,8 @@ public class SensorNetwork implements Network {
      * {@inheritDoc}
      */
     @Override
-    public int calculateCostOfPath(List<SensorNode> path) {
-        int currCost = 0;
+    public long calculateCostOfPath(List<SensorNode> path) {
+        long currCost = 0;
         for (int i = 0; i < path.size() - 1; i++) {
             currCost += this.getCost(path.get(i), path.get(i + 1));
         }
@@ -507,16 +507,18 @@ public class SensorNetwork implements Network {
      * {@inheritDoc}
      */
     @Override
-    public void saveAsCsInp(String fileName) {
-        final int supply = this.dataPacketCount * this.getDataNodeCount();
-        final int demand = -supply;
+    public void saveAsPMPCsInp(String fileName) {
+        final long supply = this.dataPacketCount * this.getDataNodeCount();
+        final long demand = -supply;
 
-        final int totalNodes = this.getDataNodeCount() + this.getStorageNodeCount() + 3;
-        final int totalEdges = this.getEdgeCount();
+        final long nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final long totalNodes = nonTransitionNodeCount + 3;
+        final long totalEdges = this.getPMPCs2EdgeCount();
 
         File file = new File(fileName);
         try (PrintWriter writer = new PrintWriter(file)) {
             /* Header */
+            writer.println("c For use with PMPCs2Model");
             writer.printf("c Min-Cost flow problem with %d nodes and %d arcs (edges)\n", totalNodes, totalEdges);
             writer.printf("p min %d %d\n", totalNodes, totalEdges);
             writer.println();
@@ -533,8 +535,10 @@ public class SensorNetwork implements Network {
             /* Arcs */
             writer.println("c arc list follows");
             writer.println("c arc has <tail> <head> <capacity l.b.> <capacity u.b> <cost>");
+            writer.println();
 
             /* Path from Source to DN is always 0 cost (not represented in the network) */
+            writer.println("c Source to DNs");
             for (DataNode dn : this.dNodes) {
                 writer.printf("c Source -> %s\n", dn.getName());
                 writer.printf("a %d %d %d %d %d\n", 0, dn.getId(), 0, this.dataPacketCount, 0);
@@ -542,7 +546,8 @@ public class SensorNetwork implements Network {
             writer.println();
 
             /* Find all paths from DN# -> SN#, Dummy */
-            int profit;
+            writer.println("c DNs to SNs (and DN -> Dummy)");
+            long profit;
             for (DataNode dn : this.dNodes) {
                 for (StorageNode sn : this.sNodes) {
                     writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
@@ -559,9 +564,12 @@ public class SensorNetwork implements Network {
             /* Path from SN, Dummy -> Sink is always 0 cost (not represented in the network) */
             writer.println("c SNs to Sink");
             for (SensorNode sn : this.sNodes) {
+                writer.printf("c %s -> Sink\n", sn.getName());
                 writer.printf("a %d %d %d %d %d\n",
                         sn.getId() + this.getDataNodeCount(), totalNodes - 1, 0, this.storageCapacity, 0);
             }
+            writer.println();
+
             writer.println("c Dummy to Sink");
             writer.printf("a %d %d %d %d %d\n", totalNodes - 2, totalNodes - 1, 0, supply, 0);
 
@@ -571,15 +579,82 @@ public class SensorNetwork implements Network {
         }
     }
 
-    private List<SensorNode> bfs(Map<SensorNode, Set<SensorNode>> graph, SensorNode start, SensorNode end) {
-        Queue<Tuple<SensorNode, Integer, SensorNode>> q = new PriorityQueue<>(Comparator.comparing(Tuple::second));
-        Map<SensorNode, SensorNode> backPointers = new HashMap<>();
-        q.offer(Tuple.of(start, 0, null));
+    @Override
+    public void saveAsCsInp(String fileName) {
+        final long supply = this.dataPacketCount * this.getDataNodeCount();
+        final long demand = -supply;
+        final long minFlow = 0;
+        final long maxFlow = this.dataPacketCount;
 
-        Tuple<SensorNode, Integer, SensorNode> currPair;
+        final long nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        final long totalNodes = nonTransitionNodeCount + 2;
+        final long totalEdges = this.getCs2EdgeCount();
+
+        File file = new File(fileName);
+        try (PrintWriter writer = new PrintWriter(file)) {
+            /* Header */
+            writer.println("c For use with Cs2Model");
+            writer.printf("c Min-Cost flow problem with %d nodes and %d arcs (edges)\n",
+                    totalNodes, totalEdges);
+            writer.printf("p min %d %d\n", totalNodes, totalEdges);
+            writer.println();
+
+            /* Set s (source) and t (sink) nodes */
+            writer.printf("c Supply of %d at node %d (\"Source\")\n", supply, 0);
+            writer.printf("n %d %d\n", 0, supply);
+            writer.println();
+
+            writer.printf("c Demand of %d at node %d (\"Sink\")\n", demand, this.nodes.size() + 1);
+            writer.printf("n %d %d\n", nonTransitionNodeCount + 1, demand);
+            writer.println();
+
+            /* Arcs */
+            writer.println("c arc list follows");
+            writer.println("c arc has <tail> <head> <capacity l.b.> <capacity u.b> <cost>");
+            writer.println();
+
+            /* Path from Source to DN is always 0 cost (not represented in the network) */
+            for (SensorNode dn : this.dNodes) {
+                writer.printf("c Source -> %s\n", dn.getName());
+                writer.printf("a %d %d %d %d %d\n", 0, dn.getId(), minFlow, maxFlow, 0);
+            }
+            writer.println();
+
+            /* Find all paths from DN#->SN# */
+            writer.println("c DNs to SNs");
+            long currCost;
+            for (SensorNode dn : this.dNodes) {
+                for (SensorNode sn : this.sNodes) {
+                    writer.printf("c %s -> %s\n", dn.getName(), sn.getName());
+                    currCost = this.calculateMinCost(dn, sn);
+                    writer.printf("a %d %d %d %d %d\n",
+                            dn.getId(), this.getDataNodeCount() + sn.getId(), minFlow, maxFlow, currCost);
+                }
+                writer.println();
+            }
+
+            /* Path from SN to Sink is always 0 cost (not represented in the network) */
+            writer.println("c SNs to Sink");
+            for (SensorNode sn : this.sNodes) {
+                writer.printf("c %s -> Sink\n", sn.getName());
+                writer.printf("a %d %d %d %d %d\n",
+                        this.getDataNodeCount() + sn.getId(), nonTransitionNodeCount + 1, minFlow, this.storageCapacity, 0);
+            }
+            System.out.printf("Saved flow network in file \"%s\"!\n", fileName);
+        } catch (IOException e) {
+            System.out.printf("ERROR: Failed to create %s\n", fileName);
+        }
+    }
+
+    private List<SensorNode> bfs(Map<SensorNode, Set<SensorNode>> graph, SensorNode start, SensorNode end) {
+        Queue<Tuple<SensorNode, Long, SensorNode>> q = new PriorityQueue<>(Comparator.comparing(Tuple::second));
+        Map<SensorNode, SensorNode> backPointers = new HashMap<>();
+        q.offer(Tuple.of(start, 0L, null));
+
+        Tuple<SensorNode, Long, SensorNode> currPair;
         SensorNode curr;
         SensorNode prev;
-        int value;
+        long value;
         while (!q.isEmpty()) {
             currPair = q.poll();
             curr = currPair.first();
@@ -612,11 +687,20 @@ public class SensorNetwork implements Network {
         return from.calculateTransmissionCost(to) + to.calculateReceivingCost();
     }
 
-    private int getEdgeCount() {
-        return this.dNodes.size() + ((this.sNodes.size() + 1) * this.dNodes.size()) + (this.sNodes.size() + 1);
+    private int getPMPCs2EdgeCount() {
+        int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+        // source->DN + SN->sink + Dummy->sink                 DN->SN + DN->dummy
+        return (nonTransitionNodeCount + 1) + (this.getDataNodeCount() * (this.getStorageNodeCount() + 1));
     }
 
-    public void setOverflowPackets(int overflowPackets) {
+    private int getCs2EdgeCount() {
+        int nonTransitionNodeCount = this.getSensorNodeCount() - this.getTransitionNodeCount();
+
+        //     source->DN + SN->sink                            DN->SN
+        return nonTransitionNodeCount + (this.getDataNodeCount() * this.getStorageNodeCount());
+    }
+
+    public void setOverflowPackets(long overflowPackets) {
         this.dataPacketCount = overflowPackets;
 
         for (DataNode dn : this.dNodes) {
@@ -624,7 +708,7 @@ public class SensorNetwork implements Network {
         }
     }
 
-    public void setStorageCapacity(int storageCapacity) {
+    public void setStorageCapacity(long storageCapacity) {
         this.storageCapacity = storageCapacity;
 
         for (StorageNode sn : this.sNodes) {
@@ -633,12 +717,12 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public boolean canSendPackets(DataNode dn, StorageNode sn, int packets) {
+    public boolean canSendPackets(DataNode dn, StorageNode sn, long packets) {
         return dn.canRemovePackets(packets) && sn.canStore(packets);
     }
 
     @Override
-    public void sendPackets(DataNode dn, StorageNode sn, int packets) {
+    public void sendPackets(DataNode dn, StorageNode sn, long packets) {
         if (!this.canSendPackets(dn, sn, packets)) {
             throw new IllegalArgumentException(
                     String.format("Cannot send from %s (%d/%d packets left) -> %s (%d/%d space left)\n",
@@ -662,13 +746,13 @@ public class SensorNetwork implements Network {
     }
 
     @Override
-    public int calculateProfitOf(DataNode from, StorageNode to) {
-        int cost = this.calculateMinCost(from, to);
+    public long calculateProfitOf(DataNode from, StorageNode to) {
+        long cost = this.calculateMinCost(from, to);
         return from.getOverflowPacketValue() - cost;
     }
 
-    public SensorNode getSensorNodeByUuid(int uuid) {
-        return this.nodes.get(uuid - 1);
+    public SensorNode getSensorNodeByUuid(long uuid) {
+        return this.nodes.get((int) uuid - 1);
     }
 
     @Override

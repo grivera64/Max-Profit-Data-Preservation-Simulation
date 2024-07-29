@@ -1,9 +1,11 @@
 import com.grivera.solver.PMPCs2Model;
+import com.grivera.solver.Cs2Model;
 import com.grivera.generator.Network;
 import com.grivera.generator.SensorNetwork;
 import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 import com.grivera.solver.PMPMarlModel;
+import com.grivera.util.Converter;
 
 import java.util.Scanner;
 
@@ -60,41 +62,76 @@ public class RunModelTests {
         }
         System.out.println();
 
+        System.out.print("Print out route? ([Y]es/[N]o)\n(Yes) > ");
+        String printRoute = keyboard.nextLine();
+        boolean showRoute = true;
+        if (printRoute.contains("no") || printRoute.contains("No") || printRoute.equalsIgnoreCase("n")) {
+            showRoute = false;
+        }
+        System.out.println();
+
         System.out.println("Running models...");
         System.out.println("=================");
 
         Model model = new PMPGreedyModel(network);
         model.run();
         System.out.println("Greedy:");
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+        System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+        System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
-        model.printRoute();
-        System.out.println();
-
-        try {
-            System.out.println("CS2 (Optimal):");
-            model = new PMPCs2Model(network, cs2Location);
-            model.run();
-            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
-            System.out.println();
+        if (showRoute) {
             model.printRoute();
-        } catch (IllegalArgumentException e) {
-            System.out.printf("WARNING: %s\n", e.getMessage());
-            System.out.println("Skipping Cs2Model...");
-        } finally {
             System.out.println();
         }
 
-        System.out.printf("MARL (%d episodes):\n", episodes);
+        try {
+            System.out.println("Profit Aware CS2 (PMPCs2Model):");
+            model = new PMPCs2Model(network, cs2Location);
+            model.run();
+            System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+            System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+            System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
+            System.out.println();
+            if (showRoute) {
+                model.printRoute();
+                System.out.println();
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.printf("WARNING: %s\n", e.getMessage());
+            System.out.println("Skipping Cs2Model...");
+            System.out.println();
+        }
+
+        try {
+            System.out.println("Profit Oblivious CS2 (Cs2Model):");
+            model = new Cs2Model(network, cs2Location);
+            model.run();
+            System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+            System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+            System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
+            System.out.println();
+            if (showRoute) {
+                model.printRoute();
+                System.out.println();
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.printf("WARNING: %s\n", e.getMessage());
+            System.out.println("Skipping Cs2Model...");
+            System.out.println();
+        }
+
+        System.out.printf("MARL (%,d episodes):\n", episodes);
         model = new PMPMarlModel(network);
         model.run(episodes);
-        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
-        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
+        System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
+        System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
-        model.printRoute();
-        System.out.println();
+        if (showRoute) {
+            model.printRoute();
+            System.out.println();
+        }
     }
 
     public static Network readNetwork() {
@@ -144,14 +181,14 @@ public class RunModelTests {
         int storageCount = keyboard.nextInt();
         keyboard.nextLine();
 
-        System.out.println("Please enter the min value (Vl) that any data packet can have:");
+        System.out.println("Please enter the min value (Vl) in cents that any data packet can have:");
         System.out.print("Vl = ");
-        int lowestValue = keyboard.nextInt();
+        long lowestValue = (long) Converter.centsToMicroJoules(keyboard.nextDouble());
         keyboard.nextLine();
 
-        System.out.println("Please enter the max value (Vh) that any data packet can have:");
+        System.out.println("Please enter the max value (Vh) in cents that any data packet can have:");
         System.out.print("Vh = ");
-        int highestValue = keyboard.nextInt();
+        long highestValue = (long) Converter.centsToMicroJoules(keyboard.nextDouble());
         keyboard.nextLine();
 
         return SensorNetwork.of(

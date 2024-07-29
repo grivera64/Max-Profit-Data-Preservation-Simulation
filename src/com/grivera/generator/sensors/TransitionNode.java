@@ -13,7 +13,7 @@ public class TransitionNode extends SensorNode {
     public void resetPackets() { /* Do Nothing */ }
 
     @Override
-    public int getId() {
+    public long getId() {
         return this.id;
     }
 

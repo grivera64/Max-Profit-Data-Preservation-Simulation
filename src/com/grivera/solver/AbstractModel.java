@@ -36,7 +36,7 @@ public abstract class AbstractModel implements Model {
     }
 
     @Override
-    public int getTotalCost() {
+    public long getTotalCost() {
         if (!this.hasRan) {
             throw new IllegalStateException("Cannot get the total cost before running the model!");
         }
@@ -44,11 +44,27 @@ public abstract class AbstractModel implements Model {
     }
 
     @Override
-    public int getTotalProfit() {
+    public long getTotalProfit() {
         if (!this.hasRan) {
             throw new IllegalStateException("Cannot get the total profit before running the model!");
         }
         return -1;
+    }
+
+    @Override
+    public long getTotalValue() {
+        if (!this.hasRan) {
+            throw new IllegalStateException("Cannot get the total value before running the model!");
+        }
+        return -1;
+    }
+
+    @Override
+    public void printRoute() {
+        if (!this.hasRan()) {
+            throw new IllegalStateException("Cannot print the route before running the model!");
+        }
+        return;
     }
 
     public final Network getNetwork() {
