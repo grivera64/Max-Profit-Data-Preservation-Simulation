@@ -132,14 +132,14 @@ public class PMPNewMarlModel extends AbstractModel {
             // } // end while
             // all agents have arrived at storage node
             for (Agent agent : state.getAgents()) {
-                cost += agent.getTravelCost();
-                if (agent.getStoredInStorage()){
+
+                if (agent.getStoredInStorage()) {
                     reward += (int) agent.getRewardCol();
+                    cost += agent.getTravelCost();
+                } else {
+                    //
                 }
-                else{
-                    cost = 0;
-                }
-                
+
             }
             profit = reward - cost;
             if (profit > max) {// 28.
@@ -153,9 +153,11 @@ public class PMPNewMarlModel extends AbstractModel {
                         if (prevNode == null || currNode == null) {
                             System.out.println("node in route is null");
                         }
+                        double newReward = 0;
+                        cost++;// Temporary; this is incase cost is 0, to avoid divide by 0
+                        newReward = state.getEdgeReward(prevNode, currNode) + (double) (w / cost);
 
-                        double newReward = state.getEdgeReward(prevNode, currNode) + (double) (w / cost);
-                        state.setEdgeReward(prevNode, currNode, newReward); // line 30.
+                        state.setEdgeReward(prevNode, currNode, newReward * i); // line 30.
 
                     }
                 }
@@ -164,17 +166,18 @@ public class PMPNewMarlModel extends AbstractModel {
                     double totalReward = 0.0; // r(s,t)
                     double totalCost = 0.0; // c(s,t)
                     double stateTransitProfit; // p(s,t)
-                    for (Agent agent : state.getAgents()) {
-                        if (j + 1 < agent.getRoute().size()) {
-                            SensorNode currNode = agent.getRoute().get(j);
-                            SensorNode nextNode = agent.getRoute().get(j + 1);
-                            // if j+1 is less than the route size then node changed in state transition
-                            // first transition is route.j to route j+1
-                            totalReward += state.getEdgeReward(currNode, nextNode);
-                            totalCost += currNode.calculateTransmissionCost(nextNode);
-                            totalCost += nextNode.calculateReceivingCost();
-                        }
-                    }
+                    // for (Agent agent : state.getAgents()) {
+                    Agent agent = state.getAgents().get(j);
+                    // if (j + 1 < agent.getRoute().size()) {
+                    SensorNode currNode = agent.getRoute().get(0);
+                    SensorNode nextNode = agent.getRoute().get(1);
+                    // if j+1 is less than the route size then node changed in state transition
+                    // first transition is route.j to route j+1
+                    totalReward += state.getEdgeReward(currNode, nextNode);
+                    totalCost += currNode.calculateTransmissionCost(nextNode);
+                    totalCost += nextNode.calculateReceivingCost();
+                    // }
+                    // }
                     state.setTransitionReward(transition, totalReward); // line 32
                     stateTransitProfit = totalReward - totalCost;
                     state.setTransitionProfit(transition, stateTransitProfit); // line 33.
@@ -204,10 +207,10 @@ public class PMPNewMarlModel extends AbstractModel {
         // storedinStorage = storedInStorageNext
         // state.packetsStoredInNode(agent.nextLocation) =
         // state.packetsStoredInNodeNext(agent.nextLocation)
-        for(Agent agent: state.getAgents()) {
+        for (Agent agent : state.getAgents()) {
             updateState(state);
         }
-        
+
         // }
         // return route, return Cost of Route, return profit of route
         // or just sys.out
@@ -454,7 +457,6 @@ public class PMPNewMarlModel extends AbstractModel {
     private void findNextStateExecutionNew(NetState state) {
         // List<List<SensorNode>> allJointActions = generateAllJointActions(state);
 
-        
         // List<SensorNode> bestJointAction = allJointActions.get(0);
 
         for (Agent agent : state.getAgents()) {
