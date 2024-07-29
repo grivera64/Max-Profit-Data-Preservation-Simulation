@@ -25,13 +25,20 @@ public class NetState {
         // for each agent/packet set current/original location and value
         Agent currAgent;
         for (DataNode dn : network.getDataNodes()) {
-            for (int j = 0; j < dn.getOverflowPackets(); j++) {
+            //for (int j = 0; j < dn.getOverflowPackets(); j++) {
                 currAgent = new Agent();
                 currAgent.setCurrentLocation(dn);
                 currAgent.setOriginalLocation(dn);
                 currAgent.setPacketValue(dn.getOverflowPacketValue());
                 
                 this.agents.add(currAgent);
+            //}
+        }
+        for (DataNode dn : network.getDataNodes()){
+            for(SensorNode sn: network.getSensorNodes()){
+                double costOfPath = network.calculateCostOfPath(network.getMinCostPath(sn, dn));
+                dn.getDistToOthers().put(sn.getUuid(), costOfPath);
+                sn.getDistToOthers().put(dn.getUuid(), costOfPath);
             }
         }
     }
@@ -96,13 +103,25 @@ public class NetState {
     public String encodeST(String nextState) {
         return encodeState() + "-" + nextState;
     }
+    
+    public String encodeST(String nextState, Agent agent) {
+        return Integer.toString(agent.getCurrentLocation().getUuid()) + "-" + nextState;
+    }
 
     public String encodeST() {
         return encodeState() + "-" + encodeNextState();
     }
 
+    public String encodeST(Agent agent) {
+        return Integer.toString(agent.getCurrentLocation().getUuid()) + "-" + Integer.toString(agent.getNextLocation().getUuid());
+    }
+
     public String encodeTZ(String nextNextState) {
         return encodeNextState() + "-" + nextNextState;
+    }
+    public String encodeTZ(String nextNextState, Agent agent) {
+        //return encodeNextState() + "-" + nextNextState;
+        return Integer.toString(agent.getNextLocation().getUuid()) + "-" + nextNextState;
     }
 
     public void addStateTransition(String bestStateTransition) {

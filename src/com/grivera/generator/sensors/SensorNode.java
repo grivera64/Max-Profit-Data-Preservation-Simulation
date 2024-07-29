@@ -1,5 +1,8 @@
 package com.grivera.generator.sensors;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Represents the basic form of a Sensor Node in a Sensor com.grivera.generator.Network
  */
@@ -14,6 +17,7 @@ public abstract class SensorNode {
     private long uuid;
     private final double x, y, tr;
     private String name;
+    private Map<Integer, Double> distToOthers = new HashMap<>();
 
     public SensorNode(double x, double y, double tr, String name) {
         this.x = x;
@@ -34,6 +38,10 @@ public abstract class SensorNode {
 
     public long getUuid() {
         return this.uuid;
+    }
+
+    public Map<Integer,Double> getDistToOthers(){
+        return this.distToOthers;
     }
 
     /**

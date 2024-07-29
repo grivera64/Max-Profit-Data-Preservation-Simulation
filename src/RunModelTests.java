@@ -6,6 +6,7 @@ import com.grivera.solver.Model;
 import com.grivera.solver.PMPGreedyModel;
 import com.grivera.solver.PMPMarlModel;
 import com.grivera.util.Converter;
+import com.grivera.solver.PMPNewMarlModel;
 
 import java.util.Scanner;
 
@@ -122,7 +123,7 @@ public class RunModelTests {
         }
 
         System.out.printf("MARL (%,d episodes):\n", episodes);
-        model = new PMPMarlModel(network);
+        model = new PMPNewMarlModel(network);
         model.run(episodes);
         System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
         System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));

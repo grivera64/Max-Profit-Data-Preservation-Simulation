@@ -1,7 +1,9 @@
 package com.grivera.solver;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.grivera.generator.sensors.SensorNode;
 
@@ -16,6 +18,7 @@ public class Agent {
     private boolean storedInStorage = false;
     private boolean storedInStorageNext = false;
     private List<SensorNode> route = new ArrayList<SensorNode>();
+    Map<Integer, Double> distToOthers = new HashMap<>();
 
     public Agent() {
         // this.currLocation = currLocation;
