@@ -353,7 +353,7 @@ public class PMPMarlModel extends AbstractModel {
             if (!(nextLocation instanceof StorageNode)) {
                 continue;
             }
-            state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, 0);
+            state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, (long)0);
             if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
                 continue;
             }

@@ -19,17 +19,18 @@ public class PMPNewMarlModel extends AbstractModel {
     private double gammaStart = .1;
     private double gammaEnd = .1;
     private double epsilon;
-    private double epsilonStart = .2;
-    private double epsilonEnd = .2;
+    private double epsilonStart = .9;
+    private double epsilonEnd = .1;
     private int episodes;
     private static final int delta = 1;
     private static final int beta = 2;
     private static final int w = 10000;
     private static final double storageReward = 1000;
     private static final double nonStorageReward = 1;
-    private int storageCapacity;
-    private int totalCost;
-    private int totalProfit;
+    private long storageCapacity;
+    private long totalCost;
+    private long totalProfit;
+    private long totalValue;
     private NetState finalState;
 
     public PMPNewMarlModel(Network network) {
@@ -74,7 +75,7 @@ public class PMPNewMarlModel extends AbstractModel {
         Network network = this.getNetwork();
 
         int cost, reward, profit;
-        int max = Integer.MIN_VALUE; // line 0.
+        long max = Long.MIN_VALUE; // line 0.
         // create state object with nodes and an agent for each packet
         NetState state = new NetState(network);
 
@@ -217,23 +218,28 @@ public class PMPNewMarlModel extends AbstractModel {
         int costOfRoute = 0;
         int profitOfRoute = 0;
         for (Agent agent : state.getAgents()) {
-            costOfRoute += agent.calculateCostOfPath();
-            if (agent.getStoredInStorage())
+            
+            if (agent.getStoredInStorage()){
                 profitOfRoute += agent.getPacketValue();
+                costOfRoute += agent.calculateCostOfPath();
+            }
+                
         }
+        this.totalValue = profitOfRoute;
         profitOfRoute -= costOfRoute;
 
         this.totalCost = costOfRoute;
         this.totalProfit = profitOfRoute;
+        
         this.finalState = state;
     }
 
     private void moveAgentsToState(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             double reward = agent.getRewardCol();
-            int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-            int receiveCost = agent.getNextLocation().calculateReceivingCost();
+            long transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
+            long receiveCost = agent.getNextLocation().calculateReceivingCost();
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
                 agent.setTravelCost(travelCost + transmitCost + receiveCost);
                 if (!state.edgeHasReward(agent.getCurrentLocation(), agent.getNextLocation())) {
@@ -249,11 +255,11 @@ public class PMPNewMarlModel extends AbstractModel {
 
     private void moveAgentsToStateNew(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             double reward = agent.getRewardCol();
             // int transmitCost =
             // agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-            int transmitCost = this.getNetwork().calculateCostOfPath(
+            long transmitCost = this.getNetwork().calculateCostOfPath(
                     this.getNetwork().getMinCostPath(agent.getCurrentLocation(), agent.getNextLocation()));
             // int receiveCost = agent.getNextLocation().calculateReceivingCost();
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
@@ -271,11 +277,11 @@ public class PMPNewMarlModel extends AbstractModel {
 
     private void moveAgentsToStateExecutionNew(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
+            long travelCost = agent.getTravelCost();
             // int transmitCost =
             // agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
             // int receiveCost = agent.getNextLocation().calculateReceivingCost();
-            int transmitCost = this.getNetwork().calculateCostOfPath(
+            long transmitCost = this.getNetwork().calculateCostOfPath(
                     this.getNetwork().getMinCostPath(agent.getCurrentLocation(), agent.getNextLocation()));
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
                 agent.setTravelCost(travelCost + transmitCost);
@@ -287,9 +293,9 @@ public class PMPNewMarlModel extends AbstractModel {
 
     private void moveAgentsToStateExecution(NetState state) {
         for (Agent agent : state.getAgents()) {
-            int travelCost = agent.getTravelCost();
-            int transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
-            int receiveCost = agent.getNextLocation().calculateReceivingCost();
+            long travelCost = agent.getTravelCost();
+            long transmitCost = agent.getCurrentLocation().calculateTransmissionCost(agent.getNextLocation());
+            long receiveCost = agent.getNextLocation().calculateReceivingCost();
             if (!(agent.getCurrentLocation() == agent.getNextLocation())) {
                 agent.setTravelCost(travelCost + transmitCost + receiveCost);
             }
@@ -498,7 +504,7 @@ public class PMPNewMarlModel extends AbstractModel {
             if (!(nextLocation instanceof StorageNode)) {
                 continue;
             }
-            state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, 0);
+            state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, (long)0);
             if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
                 continue;
             }
@@ -526,7 +532,7 @@ public class PMPNewMarlModel extends AbstractModel {
         if (!(nextLocation instanceof StorageNode)) {
             return;
         }
-        state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, 0);
+        state.packetsStoredInNodeNext.putIfAbsent((StorageNode) nextLocation, (long)0);
         if (state.packetsStoredInNodeNext.get(nextLocation) == storageCapacity) {
             return;
         }
@@ -582,7 +588,8 @@ public class PMPNewMarlModel extends AbstractModel {
         double weight = 0.0;
 
         // transmissionCost
-        weight += agent.getCurrentLocation().calculateTransmissionCost(jointAction.get(0));
+        //weight += agent.getCurrentLocation().calculateTransmissionCost(jointAction.get(0));
+        weight+= this.getNetwork().calculateCostOfPath(this.getNetwork().getMinCostPath(agent.getCurrentLocation(), jointAction.get(0))) ;
         // receivingCost
         weight += jointAction.get(0).calculateReceivingCost();
         if (!state.edgeHasReward(agent.getCurrentLocation(), jointAction.get(0))) {
@@ -766,7 +773,7 @@ public class PMPNewMarlModel extends AbstractModel {
     private String encodeStateList(List<SensorNode> list) {
         StringJoiner sj = new StringJoiner("-");
         for (SensorNode sensorNode : list) {
-            sj.add(Integer.toString(sensorNode.getUuid()));
+            sj.add(Long.toString(sensorNode.getUuid()));
         }
         return sj.toString();
     }
@@ -845,12 +852,17 @@ public class PMPNewMarlModel extends AbstractModel {
         }
     }
 
-    public int getTotalCost() {
+    public long getTotalCost() {
         super.getTotalCost();
         return this.totalCost;
     }
 
-    public int getTotalProfit() {
+    public long getTotalValue() {
+        super.getTotalValue();
+        return this.totalValue;
+    }
+
+    public long getTotalProfit() {
         super.getTotalProfit();
         return this.totalProfit;
     }

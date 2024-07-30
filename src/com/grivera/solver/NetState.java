@@ -15,8 +15,8 @@ public class NetState {
     private Map<String, Double> stateTransitionProfit = new HashMap<>();
 
     public List<String> stateTransitions = new ArrayList<>();
-    public Map<StorageNode, Integer> packetsStoredInNode = new HashMap<>();
-    public Map<StorageNode, Integer> packetsStoredInNodeNext = new HashMap<>();
+    public Map<StorageNode, Long> packetsStoredInNode = new HashMap<>();
+    public Map<StorageNode, Long> packetsStoredInNodeNext = new HashMap<>();
     public Map<String, Double> maxQNextTransition = new HashMap<>();
 
     public NetState(Network network) {
@@ -105,7 +105,7 @@ public class NetState {
     }
     
     public String encodeST(String nextState, Agent agent) {
-        return Integer.toString(agent.getCurrentLocation().getUuid()) + "-" + nextState;
+        return Long.toString(agent.getCurrentLocation().getUuid()) + "-" + nextState;
     }
 
     public String encodeST() {
@@ -113,7 +113,7 @@ public class NetState {
     }
 
     public String encodeST(Agent agent) {
-        return Integer.toString(agent.getCurrentLocation().getUuid()) + "-" + Integer.toString(agent.getNextLocation().getUuid());
+        return Long.toString(agent.getCurrentLocation().getUuid()) + "-" + Long.toString(agent.getNextLocation().getUuid());
     }
 
     public String encodeTZ(String nextNextState) {
@@ -121,7 +121,7 @@ public class NetState {
     }
     public String encodeTZ(String nextNextState, Agent agent) {
         //return encodeNextState() + "-" + nextNextState;
-        return Integer.toString(agent.getNextLocation().getUuid()) + "-" + nextNextState;
+        return Long.toString(agent.getNextLocation().getUuid()) + "-" + nextNextState;
     }
 
     public void addStateTransition(String bestStateTransition) {

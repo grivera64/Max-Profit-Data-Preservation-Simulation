@@ -13,6 +13,7 @@ import java.util.Scanner;
 public class RunModelTests {
 
     private static final Scanner keyboard = new Scanner(System.in);
+
     public static void main(String[] args) {
         System.out.println("Welcome to the Max Profit Data Preservation Simulator!");
         System.out.println("===========================================");
@@ -27,7 +28,7 @@ public class RunModelTests {
 
         Network network = null;
         switch (option.charAt(0)) {
-            case 'F', 'f' ->  network = readNetwork();
+            case 'F', 'f' -> network = readNetwork();
             case 'G', 'g' -> {
                 network = generateNetwork();
                 System.out.print("Please name the network:\n(\"network\".sn) > ");
@@ -107,11 +108,16 @@ public class RunModelTests {
         try {
             System.out.println("Profit Oblivious CS2 (Cs2Model):");
             model = new Cs2Model(network, cs2Location);
-            model.run();
+            model.run(); 
             System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
             System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
             System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
             System.out.println();
+
+            /*System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
+            System.out.println();*/
             if (showRoute) {
                 model.printRoute();
                 System.out.println();
@@ -125,10 +131,20 @@ public class RunModelTests {
         System.out.printf("MARL (%,d episodes):\n", episodes);
         model = new PMPNewMarlModel(network);
         model.run(episodes);
-        System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
-        System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
-        System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
+        
+        System.out.printf("Cost: %,.2f cents\n",
+        Converter.microJoulesToCents(model.getTotalCost()));
+        System.out.printf("Profit: %,.2f cents\n",
+        Converter.microJoulesToCents(model.getTotalProfit()));
+        System.out.printf("Value: %,.2f cents\n",
+        Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
+        
+        /*System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
+        System.out.println();*/
+
         if (showRoute) {
             model.printRoute();
             System.out.println();
@@ -194,7 +210,6 @@ public class RunModelTests {
 
         return SensorNetwork.of(
                 width, height, nodeCount, transmissionRange, gNodeCount, packetsCount, sNodeCount, storageCount,
-                lowestValue, highestValue
-        );
+                lowestValue, highestValue);
     }
 }

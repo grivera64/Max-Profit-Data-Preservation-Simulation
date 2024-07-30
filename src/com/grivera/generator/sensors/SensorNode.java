@@ -17,7 +17,7 @@ public abstract class SensorNode {
     private long uuid;
     private final double x, y, tr;
     private String name;
-    private Map<Integer, Double> distToOthers = new HashMap<>();
+    private Map<Long, Double> distToOthers = new HashMap<>();
 
     public SensorNode(double x, double y, double tr, String name) {
         this.x = x;
@@ -40,7 +40,7 @@ public abstract class SensorNode {
         return this.uuid;
     }
 
-    public Map<Integer,Double> getDistToOthers(){
+    public Map<Long,Double> getDistToOthers(){
         return this.distToOthers;
     }
 
