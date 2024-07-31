@@ -82,6 +82,11 @@ public class RunModelTests {
         System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
         System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
+
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+        System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+        System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
+        System.out.println();
         if (showRoute) {
             model.printRoute();
             System.out.println();
@@ -94,6 +99,11 @@ public class RunModelTests {
             System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
             System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
             System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
+            System.out.println();
+
+            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
+            System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
             System.out.println();
             if (showRoute) {
                 model.printRoute();
@@ -108,16 +118,16 @@ public class RunModelTests {
         try {
             System.out.println("Profit Oblivious CS2 (Cs2Model):");
             model = new Cs2Model(network, cs2Location);
-            model.run(); 
+            model.run();
             System.out.printf("Cost: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalCost()));
             System.out.printf("Profit: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalProfit()));
             System.out.printf("Value: %,.2f cents\n", Converter.microJoulesToCents(model.getTotalValue()));
             System.out.println();
 
-            /*System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+            System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
             System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
             System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-            System.out.println();*/
+            System.out.println();
             if (showRoute) {
                 model.printRoute();
                 System.out.println();
@@ -131,19 +141,19 @@ public class RunModelTests {
         System.out.printf("MARL (%,d episodes):\n", episodes);
         model = new PMPNewMarlModel(network);
         model.run(episodes);
-        
+
         System.out.printf("Cost: %,.2f cents\n",
-        Converter.microJoulesToCents(model.getTotalCost()));
+                Converter.microJoulesToCents(model.getTotalCost()));
         System.out.printf("Profit: %,.2f cents\n",
-        Converter.microJoulesToCents(model.getTotalProfit()));
+                Converter.microJoulesToCents(model.getTotalProfit()));
         System.out.printf("Value: %,.2f cents\n",
-        Converter.microJoulesToCents(model.getTotalValue()));
+                Converter.microJoulesToCents(model.getTotalValue()));
         System.out.println();
-        
-        /*System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
+
+        System.out.printf("Cost: %d \u00b5J\n", model.getTotalCost());
         System.out.printf("Profit: %d \u00b5J\n", model.getTotalProfit());
         System.out.printf("Value: %d \u00b5J\n", model.getTotalValue());
-        System.out.println();*/
+        System.out.println();
 
         if (showRoute) {
             model.printRoute();

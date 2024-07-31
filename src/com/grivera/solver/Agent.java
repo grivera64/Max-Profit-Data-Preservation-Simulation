@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.grivera.generator.Network;
 import com.grivera.generator.sensors.SensorNode;
 
 public class Agent {
@@ -19,6 +20,7 @@ public class Agent {
     private boolean storedInStorageNext = false;
     private List<SensorNode> route = new ArrayList<SensorNode>();
     Map<Integer, Double> distToOthers = new HashMap<>();
+    public List<String> stateTransitions = new ArrayList<>();
 
     public Agent() {
         // this.currLocation = currLocation;
@@ -79,6 +81,9 @@ public class Agent {
         return storedInStorageNext;
     }
 
+    public void addStateTransition(String bestStateTransition) {
+        this.stateTransitions.add(bestStateTransition);
+    }
     public void setStoredInStorageNext(){
         this.storedInStorageNext = true;
     }
@@ -120,6 +125,18 @@ public class Agent {
 
             totalCost += prevNode.calculateTransmissionCost(currNode);
             totalCost += currNode.calculateReceivingCost();
+        }
+        return totalCost;
+    }
+    public int calculateCostOfPathNew(Network network) {
+        int totalCost = 0;
+        for (int i = 1; i < route.size(); i++) {
+            SensorNode prevNode = route.get(i - 1);
+            SensorNode currNode = route.get(i);
+            
+            totalCost += network.calculateCostOfPath(network.getMinCostPath(prevNode,currNode));
+            //totalCost += prevNode.calculateTransmissionCost(currNode);
+            //totalCost += currNode.calculateReceivingCost();
         }
         return totalCost;
     }

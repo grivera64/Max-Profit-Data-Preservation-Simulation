@@ -54,6 +54,7 @@ public class NetState {
         // agent j is at source node Sj
         for (Agent agent : this.agents) {
             agent.resetLocation();
+            agent.stateTransitions = new ArrayList<>();
             // travel cost by agent j
             agent.resetTravel();
         }
