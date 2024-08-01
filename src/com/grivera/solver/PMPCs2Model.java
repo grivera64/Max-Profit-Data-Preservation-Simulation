@@ -162,6 +162,17 @@ public class PMPCs2Model extends AbstractModel {
     }
 
     @Override
+    public long getTotalPackets() {
+        super.getTotalPackets();
+
+        long totalPackets = 0;
+        for (Tuple<DataNode, StorageNode, Long> tuple : this.flows) {
+            totalPackets += tuple.third();
+        }
+        return totalPackets;
+    }
+
+    @Override
     public void printRoute() {
         super.printRoute();
         StringJoiner str;

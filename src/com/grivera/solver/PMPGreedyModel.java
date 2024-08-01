@@ -14,6 +14,7 @@ public class PMPGreedyModel extends AbstractModel {
     private long totalCost;
     private long totalProfit;
     private long totalValue;
+    private long totalPackets;
 
     public PMPGreedyModel(Network network) {
         super(network);
@@ -38,6 +39,7 @@ public class PMPGreedyModel extends AbstractModel {
         this.totalCost = 0;
         this.totalProfit = 0;
         this.totalValue = 0;
+        this.totalPackets = 0;
 
         Network network = this.getNetwork();
         StorageNode chosenSn;
@@ -82,6 +84,7 @@ public class PMPGreedyModel extends AbstractModel {
                     this.totalCost += cost * packetsToSend;
                     this.totalProfit += chosenProfit * packetsToSend;
                     this.totalValue += (chosenProfit * packetsToSend) + (cost * packetsToSend);
+                    this.totalPackets += packetsToSend;
 
                     routes.putIfAbsent(dn, new ArrayList<>());
                     routes.get(dn).add(Tuple.of(chosenSn, packetsToSend, network.getMinCostPath(dn, chosenSn)));
@@ -113,6 +116,13 @@ public class PMPGreedyModel extends AbstractModel {
     public long getTotalValue() {
         super.getTotalValue();
         return this.totalValue;
+    }
+
+    @Override
+    public long getTotalPackets() {
+        super.getTotalPackets();
+
+        return this.totalPackets;
     }
 
     @Override

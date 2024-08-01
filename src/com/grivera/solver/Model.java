@@ -6,5 +6,6 @@ public interface Model {
     long getTotalCost();
     long getTotalProfit();
     long getTotalValue();
+    long getTotalPackets();
     void printRoute();
 }

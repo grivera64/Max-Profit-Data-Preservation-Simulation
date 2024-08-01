@@ -60,6 +60,14 @@ public abstract class AbstractModel implements Model {
     }
 
     @Override
+    public long getTotalPackets() {
+        if (!this.hasRan) {
+            throw new IllegalStateException();
+        }
+        return -1;
+    }
+
+    @Override
     public void printRoute() {
         if (!this.hasRan()) {
             throw new IllegalStateException("Cannot print the route before running the model!");
